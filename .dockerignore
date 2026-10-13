@@ -1,0 +1,7 @@
+# Ignore dev/local files from Docker build
+.git
+.gitignore
+*.md
+sql/
+.env
+.env.local

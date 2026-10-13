@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# Redirect HTTP to HTTPS (Koyeb provides SSL termination)
+RewriteCond %{HTTP:X-Forwarded-Proto} =http
+RewriteRule .* https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# If the requested file or directory doesn't exist, serve index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L,QSA]
