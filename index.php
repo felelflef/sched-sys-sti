@@ -41,11 +41,7 @@ require_once __DIR__ . '/includes/functions.php';
         </section>
 
         <section class="gateways">
-            <a href="/minimap.php" class="gateway-card">
-                <div class="gateway-icon">🗺️</div>
-                <h2>View Campus Map</h2>
-                <p>Check real-time room availability, view daily schedules, and navigate the campus floor plan &mdash; no login required.</p>
-            </a>
+
             
             <a href="/login.php" class="gateway-card">
                 <div class="gateway-icon">🔐</div>

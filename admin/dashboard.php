@@ -33,6 +33,7 @@ $allRequests = $stmt->fetchAll();
 // Fetch Users
 $stmt = $db->query("SELECT * FROM users ORDER BY created_at DESC");
 $users = $stmt->fetchAll();
+$faculty = array_filter($users, function($u) { return $u['role'] === 'faculty'; });
 
 // Fetch Rooms
 $stmt = $db->query("SELECT * FROM classrooms ORDER BY floor_level, room_name_number");
@@ -122,7 +123,6 @@ $recentActivity = $stmt->fetchAll();
             <div class="nav-section">
                 <div class="nav-section-label">Monitoring</div>
                 <div class="nav-item active" data-target="page-overview">Overview</div>
-                <a href="/minimap.php" class="nav-item">Campus Map</a>
             </div>
 
             <div class="nav-section">
@@ -262,6 +262,7 @@ $recentActivity = $stmt->fetchAll();
                                     <option value="3">Floor 3</option>
                                 </select>
                             </div>
+                            <button class="btn btn-primary" onclick="openAddScheduleModal()">Add Schedule</button>
                         </div>
                         <div class="card-body" style="overflow-x: auto;">
                             <table class="schedule-grid" id="schedule-table">
@@ -345,6 +346,10 @@ $recentActivity = $stmt->fetchAll();
                 <!-- Section 4: Rooms -->
                 <div id="page-rooms" class="module-page">
                     <div class="card">
+                        <div class="card-header">
+                            <h3 style="margin: 0; font-size: 1.1rem;">Classroom Inventory</h3>
+                            <button class="btn btn-primary" onclick="openAddRoomModal()">Add Room</button>
+                        </div>
                         <div class="card-body" style="padding: 0;">
                             <table class="data-table">
                                 <thead>
@@ -354,6 +359,7 @@ $recentActivity = $stmt->fetchAll();
                                         <th>Type</th>
                                         <th>Capacity</th>
                                         <th>Status</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -370,6 +376,9 @@ $recentActivity = $stmt->fetchAll();
                                                 if($room['current_status'] === 'Reserved') $badgeClass = 'badge-warning';
                                             ?>
                                             <span class="badge <?= $badgeClass ?>"><?= htmlspecialchars($room['current_status']) ?></span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-outline btn-sm" onclick="openRoomEditModal(<?= $room['room_id'] ?>, '<?= htmlspecialchars($room['room_name_number'], ENT_QUOTES) ?>', '<?= htmlspecialchars($room['room_type'], ENT_QUOTES) ?>', <?= $room['capacity'] ?>, <?= $room['floor_level'] ?>)">Edit</button>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>
@@ -462,6 +471,131 @@ $recentActivity = $stmt->fetchAll();
         </div>
     </div>
 
+    <!-- Schedule Add/Edit Modal -->
+    <div class="modal-overlay" id="scheduleModal">
+        <div class="modal" style="max-width:500px;">
+            <div class="modal-header">
+                <h3 style="margin:0;" id="scheduleModalTitle">Add Schedule</h3>
+                <button class="btn btn-outline btn-sm" onclick="closeScheduleModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="sched-id" value="">
+                <div class="form-group">
+                    <label class="form-label">Room</label>
+                    <select id="sched-room" class="form-input">
+                        <option value="">-- Select Room --</option>
+                        <?php foreach($rooms as $r): ?>
+                            <option value="<?= $r['room_id'] ?>"><?= htmlspecialchars($r['room_name_number']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Faculty</label>
+                    <select id="sched-faculty" class="form-input">
+                        <option value="">-- Select Faculty --</option>
+                        <?php foreach($faculty as $f): ?>
+                            <option value="<?= $f['user_id'] ?>"><?= htmlspecialchars($f['first_name'] . ' ' . $f['last_name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Subject Code</label>
+                    <input type="text" id="sched-subject" class="form-input" placeholder="e.g. CC101">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Section</label>
+                    <input type="text" id="sched-section" class="form-input" placeholder="e.g. BSIT 1A">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Day</label>
+                    <select id="sched-day" class="form-input">
+                        <option value="Mon">Monday</option>
+                        <option value="Tue">Tuesday</option>
+                        <option value="Wed">Wednesday</option>
+                        <option value="Thu">Thursday</option>
+                        <option value="Fri">Friday</option>
+                        <option value="Sat">Saturday</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:16px;">
+                    <div class="form-group" style="flex:1;">
+                        <label class="form-label">Start Time</label>
+                        <select id="sched-start" class="form-input">
+                            <option value="07:00">7:00 AM</option>
+                            <option value="08:30">8:30 AM</option>
+                            <option value="10:00">10:00 AM</option>
+                            <option value="11:30">11:30 AM</option>
+                            <option value="13:00">1:00 PM</option>
+                            <option value="14:30">2:30 PM</option>
+                            <option value="16:00">4:00 PM</option>
+                            <option value="17:30">5:30 PM</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label class="form-label">End Time</label>
+                        <select id="sched-end" class="form-input">
+                            <option value="08:30">8:30 AM</option>
+                            <option value="10:00">10:00 AM</option>
+                            <option value="11:30">11:30 AM</option>
+                            <option value="13:00">1:00 PM</option>
+                            <option value="14:30">2:30 PM</option>
+                            <option value="16:00">4:00 PM</option>
+                            <option value="17:30">5:30 PM</option>
+                            <option value="19:00">7:00 PM</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="sched-delete-btn" style="margin-right:auto; display:none;" onclick="deleteSchedule()">Delete</button>
+                <button class="btn btn-outline" onclick="closeScheduleModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitSchedule()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Add/Edit Modal -->
+    <div class="modal-overlay" id="roomEditModal">
+        <div class="modal" style="max-width:400px;">
+            <div class="modal-header">
+                <h3 style="margin:0;" id="roomEditTitle">Add Room</h3>
+                <button class="btn btn-outline btn-sm" onclick="closeRoomEditModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="room-edit-id" value="">
+                <div class="form-group">
+                    <label class="form-label">Room Code / Name</label>
+                    <input type="text" id="room-edit-name" class="form-input" placeholder="e.g. Room 206, Lab 5">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Floor Level</label>
+                    <select id="room-edit-floor" class="form-input">
+                        <option value="1">Floor 1</option>
+                        <option value="2">Floor 2</option>
+                        <option value="3">Floor 3</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Room Type</label>
+                    <select id="room-edit-type" class="form-input">
+                        <option value="Lecture">Lecture</option>
+                        <option value="Lab">Lab</option>
+                        <option value="Kitchen">Kitchen</option>
+                        <option value="Bar">Bar</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Capacity (seats)</label>
+                    <input type="number" id="room-edit-capacity" class="form-input" min="1" placeholder="e.g. 40">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeRoomEditModal()">Cancel</button>
+                <button class="btn btn-primary" id="room-edit-submit-btn" onclick="submitRoomEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
@@ -513,15 +647,14 @@ $recentActivity = $stmt->fetchAll();
         // Initialize overview AI on load
         loadAIInsights(false);
 
-        // Schedules logic
-        document.getElementById('sched-day-filter').addEventListener('change', loadSchedules);
-        document.getElementById('sched-floor-filter').addEventListener('change', loadSchedules);
+        let loadedSchedules = {};
 
         function loadSchedules() {
             const day = document.getElementById('sched-day-filter').value;
             const floor = document.getElementById('sched-floor-filter').value;
             const tbody = document.querySelector('#schedule-table tbody');
             tbody.innerHTML = '<tr><td colspan="9" class="loading">Loading schedules...</td></tr>';
+            loadedSchedules = {};
 
             fetch(`/api/schedules.php?day=${day}&floor=${floor}`)
             .then(res => res.json())
@@ -547,13 +680,15 @@ $recentActivity = $stmt->fetchAll();
                     let tr = document.createElement('tr');
                     tr.innerHTML = `<td style="font-weight: 500;">${room.room_name_number}</td>`;
                     
+                    room.schedules.forEach(s => { loadedSchedules[s.schedule_id] = s; });
+                    
                     timeSlots.forEach(slot => {
                         let cellData = room.schedules.find(s => {
-                            return (s.start_time + '-' + s.end_time) === slot; // simplified match
+                            return (s.start_time + '-' + s.end_time) === slot;
                         });
                         
                         if(cellData) {
-                            tr.innerHTML += `<td><div class="schedule-block" title="${cellData.subject_code} - ${cellData.section_name}\n${cellData.faculty_name}">
+                            tr.innerHTML += `<td><div class="schedule-block" style="cursor:pointer;" onclick="openEditScheduleModal(${cellData.schedule_id})" title="Click to edit">
                                 <strong>${cellData.subject_code}</strong><br>
                                 ${cellData.section_name}<br>
                                 ${cellData.faculty_name}
@@ -564,6 +699,174 @@ $recentActivity = $stmt->fetchAll();
                     });
                     tbody.appendChild(tr);
                 });
+            });
+        }
+
+        // Schedule filter event listeners
+        document.getElementById('sched-day-filter').addEventListener('change', loadSchedules);
+        document.getElementById('sched-floor-filter').addEventListener('change', loadSchedules);
+
+        // Schedule CRUD
+        function openAddScheduleModal() {
+            document.getElementById('scheduleModalTitle').textContent = 'Add Schedule';
+            document.getElementById('sched-id').value = '';
+            document.getElementById('sched-room').value = '';
+            document.getElementById('sched-faculty').value = '';
+            document.getElementById('sched-subject').value = '';
+            document.getElementById('sched-section').value = '';
+            document.getElementById('sched-day').value = document.getElementById('sched-day-filter').value;
+            document.getElementById('sched-start').value = '07:00';
+            document.getElementById('sched-end').value = '08:30';
+            document.getElementById('sched-delete-btn').style.display = 'none';
+            document.getElementById('scheduleModal').style.display = 'flex';
+        }
+
+        function openEditScheduleModal(schedId) {
+            const s = loadedSchedules[schedId];
+            if (!s) return;
+            document.getElementById('scheduleModalTitle').textContent = 'Edit Schedule';
+            document.getElementById('sched-id').value = s.schedule_id;
+            document.getElementById('sched-room').value = s.room_id;
+            document.getElementById('sched-faculty').value = s.faculty_id;
+            document.getElementById('sched-subject').value = s.subject_code;
+            document.getElementById('sched-section').value = s.section_name;
+            document.getElementById('sched-day').value = s.day_of_week;
+            document.getElementById('sched-start').value = s.start_time.substring(0, 5);
+            document.getElementById('sched-end').value = s.end_time.substring(0, 5);
+            document.getElementById('sched-delete-btn').style.display = 'inline-block';
+            document.getElementById('scheduleModal').style.display = 'flex';
+        }
+
+        function closeScheduleModal() {
+            document.getElementById('scheduleModal').style.display = 'none';
+        }
+
+        function submitSchedule() {
+            const schedId = document.getElementById('sched-id').value;
+            const action = schedId ? 'edit' : 'add';
+            const payload = {
+                action: action,
+                room_id: document.getElementById('sched-room').value,
+                faculty_id: document.getElementById('sched-faculty').value,
+                subject_code: document.getElementById('sched-subject').value,
+                section_name: document.getElementById('sched-section').value,
+                day_of_week: document.getElementById('sched-day').value,
+                start_time: document.getElementById('sched-start').value,
+                end_time: document.getElementById('sched-end').value,
+                csrf_token: csrfToken
+            };
+            if (schedId) payload.schedule_id = schedId;
+
+            if (!payload.room_id || !payload.faculty_id || !payload.subject_code || !payload.section_name) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            fetch('/api/schedules.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    closeScheduleModal();
+                    loadSchedules();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            });
+        }
+
+        function deleteSchedule() {
+            const schedId = document.getElementById('sched-id').value;
+            if (!schedId) return;
+            if (!confirm('Are you sure you want to delete this schedule?')) return;
+
+            fetch('/api/schedules.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'delete', schedule_id: schedId, csrf_token: csrfToken })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    closeScheduleModal();
+                    loadSchedules();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            });
+        }
+
+        // Room Add / Edit
+        function openAddRoomModal() {
+            document.getElementById('roomEditTitle').textContent = 'Add Room';
+            document.getElementById('room-edit-id').value = '';
+            document.getElementById('room-edit-name').value = '';
+            document.getElementById('room-edit-floor').value = '1';
+            document.getElementById('room-edit-type').value = 'Lecture';
+            document.getElementById('room-edit-capacity').value = '40';
+            document.getElementById('room-edit-submit-btn').textContent = 'Add Room';
+            document.getElementById('roomEditModal').style.display = 'flex';
+        }
+
+        function openRoomEditModal(roomId, roomName, roomType, capacity, floorLevel) {
+            document.getElementById('roomEditTitle').textContent = 'Edit Room';
+            document.getElementById('room-edit-id').value = roomId;
+            document.getElementById('room-edit-name').value = roomName;
+            document.getElementById('room-edit-floor').value = floorLevel;
+            document.getElementById('room-edit-type').value = roomType;
+            document.getElementById('room-edit-capacity').value = capacity;
+            document.getElementById('room-edit-submit-btn').textContent = 'Save Changes';
+            document.getElementById('roomEditModal').style.display = 'flex';
+        }
+
+        function closeRoomEditModal() {
+            document.getElementById('roomEditModal').style.display = 'none';
+        }
+
+        function submitRoomEdit() {
+            const roomId = document.getElementById('room-edit-id').value;
+            const action = roomId ? 'edit' : 'add';
+            const roomName = document.getElementById('room-edit-name').value.trim();
+            const floorLevel = parseInt(document.getElementById('room-edit-floor').value, 10);
+            const roomType = document.getElementById('room-edit-type').value;
+            const capacity = parseInt(document.getElementById('room-edit-capacity').value, 10);
+
+            if (!roomName || !capacity || isNaN(capacity) || capacity < 1) {
+                alert('Please enter a valid room name and positive capacity.');
+                return;
+            }
+
+            const payload = {
+                action: action,
+                room_name_number: roomName,
+                floor_level: floorLevel,
+                room_type: roomType,
+                capacity: capacity,
+                csrf_token: csrfToken
+            };
+
+            if (roomId) {
+                payload.room_id = roomId;
+            }
+
+            fetch('/api/rooms.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(err => {
+                alert('Network error while saving room.');
             });
         }
 
