@@ -99,8 +99,6 @@ $csrf_token = generateCSRF();
                 <button type="submit" class="btn btn-primary btn-full">Sign In</button>
             </form>
         </div>
-        
-        <a href="/index.php" class="back-link">&larr; Back to Home</a>
     </div>
 </body>
 </html>
