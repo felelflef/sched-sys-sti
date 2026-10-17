@@ -55,25 +55,43 @@ $csrf_token = generateCSRF();
     <title>Login &mdash; STI Classroom System</title>
     <link rel="stylesheet" href="/assets/css/style.css">
     <style>
-        body { background-color: var(--bg-primary); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; font-family: sans-serif; }
-        .login-page { width: 100%; max-width: 400px; padding: 2rem; }
-        .login-brand { text-align: center; margin-bottom: 2rem; color: var(--accent-primary); }
-        .login-brand h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-        .login-brand p { color: var(--text-secondary); font-size: 0.9rem; }
-        .login-card { background: var(--bg-secondary); padding: 2rem; border-radius: 8px; box-shadow: var(--shadow-float); border: 1px solid var(--border-subtle); }
+        body { 
+            background: radial-gradient(circle at 10% 10%, rgba(255, 199, 44, 0.15) 0%, transparent 40%),
+                        radial-gradient(circle at 90% 90%, rgba(11, 78, 162, 0.12) 0%, transparent 45%),
+                        var(--bg-primary); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+        }
+        .login-page { width: 100%; max-width: 420px; padding: 2rem 1.5rem; }
+        .login-brand { text-align: center; margin-bottom: 2rem; }
+        .login-badge { display: inline-block; background: var(--accent-yellow); color: #1E293B; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; margin-bottom: 0.75rem; }
+        .login-brand h1 { font-size: 1.65rem; font-weight: 800; color: var(--accent-primary); margin: 0 0 0.4rem 0; letter-spacing: -0.02em; }
+        .login-brand p { color: var(--text-secondary); font-size: 0.95rem; margin: 0; }
+        .login-card { 
+            background: var(--bg-secondary); 
+            padding: 2.25rem; 
+            border-radius: 12px; 
+            box-shadow: 0 12px 36px rgba(11, 78, 162, 0.09); 
+            border: 1px solid var(--border-subtle); 
+            border-top: 4px solid var(--accent-yellow);
+        }
         .form-group { margin-bottom: 1.5rem; }
-        .form-label { display: block; margin-bottom: 0.5rem; font-weight: bold; color: var(--text-primary); font-size: 0.9rem; }
-        .form-input { width: 100%; padding: 0.75rem; border: 1px solid var(--border-subtle); border-radius: 4px; font-size: 1rem; box-sizing: border-box; }
-        .form-input:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(37,68,122,0.1); }
-        .btn-full { width: 100%; padding: 0.75rem; font-size: 1rem; }
-        .alert-error { background: var(--danger-bg); color: var(--danger); padding: 0.75rem; border-radius: 4px; margin-bottom: 1.5rem; font-size: 0.9rem; border: 1px solid rgba(192,57,43,0.2); }
-        .back-link { display: block; text-align: center; margin-top: 1.5rem; color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; }
-        .back-link:hover { color: var(--accent-primary); text-decoration: underline; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); font-size: 0.875rem; }
+        .form-input { width: 100%; padding: 0.8rem 1rem; border: 1.5px solid var(--border-subtle); border-radius: 8px; font-size: 0.95rem; box-sizing: border-box; transition: all 0.2s ease; background-color: #FAFAFD; }
+        .form-input:focus { outline: none; border-color: var(--accent-primary); background-color: #FFFFFF; box-shadow: 0 0 0 3px rgba(11, 78, 162, 0.15); }
+        .btn-full { width: 100%; padding: 0.85rem; font-size: 1rem; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 14px rgba(11, 78, 162, 0.25); transition: all 0.2s ease; cursor: pointer; }
+        .btn-full:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(11, 78, 162, 0.35); }
+        .alert-error { background: var(--danger-bg); color: var(--danger); padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.875rem; border: 1px solid rgba(220, 38, 38, 0.2); }
     </style>
 </head>
 <body>
     <div class="login-page">
         <div class="login-brand">
+            <span class="login-badge">Portal</span>
             <h1>STI College Marikina</h1>
             <p>Classroom Utilization System</p>
         </div>
