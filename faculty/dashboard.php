@@ -49,7 +49,7 @@ $allRooms = $stmt->fetchAll();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?= htmlspecialchars($csrf_token) ?>">
-    <title>Faculty Dashboard — STI Classroom System</title>
+    <title>Faculty Dashboard — Scheduling System</title>
     <link rel="stylesheet" href="/assets/css/style.css">
     <style>
         .module-page { display: none; }
@@ -114,7 +114,7 @@ $allRooms = $stmt->fetchAll();
     <div class="app">
         <aside class="sidebar">
             <div class="brand">
-                <div>STI Classroom System</div>
+                <div>Scheduling System</div>
                 <span class="brand-badge">Faculty Portal</span>
             </div>
             

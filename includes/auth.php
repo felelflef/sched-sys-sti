@@ -6,6 +6,14 @@ if (session_status() === PHP_SESSION_NONE) {
 
 function requireLogin() {
     if (!isset($_SESSION['user_id'])) {
+        $isApi = str_contains($_SERVER['REQUEST_URI'] ?? '', '/api/') || 
+                 (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
+        if ($isApi) {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
         header('Location: /login.php');
         exit;
     }
@@ -13,6 +21,14 @@ function requireLogin() {
 
 function requireRole(string $role) {
     if (!isset($_SESSION['role']) || $_SESSION['role'] !== $role) {
+        $isApi = str_contains($_SERVER['REQUEST_URI'] ?? '', '/api/') || 
+                 (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
+        if ($isApi) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Forbidden: You do not have permission to perform this action']);
+            exit;
+        }
         http_response_code(403);
         die('Forbidden: You do not have permission to access this page.');
     }

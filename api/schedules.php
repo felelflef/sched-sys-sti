@@ -38,9 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $rooms = $stmt->fetchAll();
 
     // Get schedules for the day
-    $schedQuery = "SELECT s.schedule_id, s.room_id, s.faculty_id, s.subject_code, s.section_name,
+    $schedQuery = "SELECT s.schedule_id, s.room_id, s.faculty_id, s.subject_code, s.subject_category, s.section_name,
                           s.day_of_week, s.start_time, s.end_time,
-                          CONCAT(u.first_name, ' ', u.last_name) AS faculty_name
+                          CONCAT(u.first_name, ' ', u.last_name) AS faculty_name,
+                          u.subject_role AS faculty_subject_role
                    FROM schedules s
                    JOIN users u ON s.faculty_id = u.user_id
                    WHERE s.day_of_week = ?";
@@ -86,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $room_id = (int)($input['room_id'] ?? 0);
         $faculty_id = (int)($input['faculty_id'] ?? 0);
         $subject_code = trim($input['subject_code'] ?? '');
+        $subject_category = trim($input['subject_category'] ?? 'IT');
         $section_name = trim($input['section_name'] ?? '');
         $day_of_week = $input['day_of_week'] ?? '';
         $start_time = $input['start_time'] ?? '';
@@ -98,6 +100,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $validDays = ['Mon','Tue','Wed','Thu','Fri','Sat'];
         if (!in_array($day_of_week, $validDays)) {
             jsonResponse(['success' => false, 'message' => 'Invalid day of week'], 400);
+        }
+
+        // Validate Faculty Subject Role Restriction
+        $facultyStmt = $db->prepare("SELECT user_id, first_name, last_name, role, subject_role FROM users WHERE user_id = ?");
+        $facultyStmt->execute([$faculty_id]);
+        $facultyUser = $facultyStmt->fetch();
+
+        if (!$facultyUser) {
+            jsonResponse(['success' => false, 'message' => 'Selected faculty does not exist'], 400);
+        }
+
+        // Enforce limitation: faculty can only be scheduled for classes matching their subject_role
+        $facultyRole = $facultyUser['subject_role'] ?: 'IT';
+        if (strcasecmp($facultyRole, $subject_category) !== 0) {
+            $facultyName = $facultyUser['first_name'] . ' ' . $facultyUser['last_name'];
+            jsonResponse([
+                'success' => false,
+                'message' => "Subject role mismatch: {$facultyName} has the '{$facultyRole}' role and can only teach {$facultyRole} classes (selected category: '{$subject_category}')."
+            ], 400);
         }
 
         // Check time conflict (same room, same day, overlapping time)
@@ -121,13 +142,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             jsonResponse(['success' => false, 'message' => 'Time conflict: another class is scheduled in this room at the same time'], 409);
         }
 
+        // Check faculty schedule overlap (same faculty, same day, overlapping time across ANY room)
+        $facConflictQuery = "SELECT s.schedule_id, c.room_name_number FROM schedules s
+                             JOIN classrooms c ON s.room_id = c.room_id
+                             WHERE s.faculty_id = ? AND s.day_of_week = ?
+                             AND s.start_time < ? AND s.end_time > ?";
+        $facConflictParams = [$faculty_id, $day_of_week, $end_time, $start_time];
+        if ($action === 'edit') {
+            $facConflictQuery .= " AND s.schedule_id != ?";
+            $facConflictParams[] = $schedule_id;
+        }
+
+        $stmt = $db->prepare($facConflictQuery);
+        $stmt->execute($facConflictParams);
+        $facConflict = $stmt->fetch();
+        if ($facConflict) {
+            jsonResponse([
+                'success' => false,
+                'message' => "Faculty schedule overlap: This instructor is already scheduled in Room {$facConflict['room_name_number']} on {$day_of_week} at this time."
+            ], 409);
+        }
+
         if ($action === 'add') {
-            $stmt = $db->prepare("INSERT INTO schedules (room_id, faculty_id, subject_code, section_name, day_of_week, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$room_id, $faculty_id, $subject_code, $section_name, $day_of_week, $start_time, $end_time]);
+            $stmt = $db->prepare("INSERT INTO schedules (room_id, faculty_id, subject_code, subject_category, section_name, day_of_week, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$room_id, $faculty_id, $subject_code, $subject_category, $section_name, $day_of_week, $start_time, $end_time]);
             jsonResponse(['success' => true, 'message' => 'Schedule added', 'schedule_id' => $db->lastInsertId()]);
         } else {
-            $stmt = $db->prepare("UPDATE schedules SET room_id=?, faculty_id=?, subject_code=?, section_name=?, day_of_week=?, start_time=?, end_time=? WHERE schedule_id=?");
-            $stmt->execute([$room_id, $faculty_id, $subject_code, $section_name, $day_of_week, $start_time, $end_time, $schedule_id]);
+            $stmt = $db->prepare("UPDATE schedules SET room_id=?, faculty_id=?, subject_code=?, subject_category=?, section_name=?, day_of_week=?, start_time=?, end_time=? WHERE schedule_id=?");
+            $stmt->execute([$room_id, $faculty_id, $subject_code, $subject_category, $section_name, $day_of_week, $start_time, $end_time, $schedule_id]);
             jsonResponse(['success' => true, 'message' => 'Schedule updated']);
         }
 
