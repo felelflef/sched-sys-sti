@@ -52,7 +52,7 @@ $csrf_token = generateCSRF();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login &mdash; STI Classroom System</title>
+    <title>Login &mdash; Scheduling System</title>
     <link rel="stylesheet" href="/assets/css/style.css">
     <style>
         body { 
@@ -92,8 +92,8 @@ $csrf_token = generateCSRF();
     <div class="login-page">
         <div class="login-brand">
             <span class="login-badge">Portal</span>
-            <h1>STI College Marikina</h1>
-            <p>Classroom Utilization System</p>
+            <h1>Scheduling System</h1>
+            <p>Classroom & Schedule Management</p>
         </div>
         
         <div class="login-card">

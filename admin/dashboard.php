@@ -53,7 +53,7 @@ $recentActivity = $stmt->fetchAll();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?= htmlspecialchars($csrf_token) ?>">
-    <title>Admin Dashboard — STI Classroom System</title>
+    <title>Admin Dashboard — Scheduling System</title>
     <link rel="stylesheet" href="/assets/css/style.css">
     <style>
         .module-page { display: none; }
@@ -99,6 +99,13 @@ $recentActivity = $stmt->fetchAll();
         .role-badge { padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; border: 1px solid currentColor; }
         .role-admin { color: var(--accent-primary); background-color: rgba(11, 78, 162, 0.06); }
         .role-faculty { color: var(--success); background-color: var(--success-bg); }
+        .subject-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; border: 1px solid transparent; }
+        .subject-it { background: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; }
+        .subject-hospitality { background: #FEF3C7; color: #B45309; border-color: #FDE68A; }
+        .subject-tourism { background: #ECFDF5; color: #047857; border-color: #A7F3D0; }
+        .subject-gened { background: #F3E8FF; color: #6D28D9; border-color: #DDD6FE; }
+        .subject-business { background: #FFF1F2; color: #BE123C; border-color: #FECDD3; }
+        .subject-none { background: #F1F5F9; color: #64748B; border-color: #E2E8F0; }
         .schedule-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
         .schedule-grid th, .schedule-grid td { border: 1px solid var(--border-subtle); padding: 8px; text-align: center; height: 64px; }
         .schedule-grid th { background-color: #F8FAFD; color: var(--text-secondary); font-weight: 700; font-size: 0.8rem; }
@@ -126,8 +133,8 @@ $recentActivity = $stmt->fetchAll();
     <div class="app">
         <aside class="sidebar">
             <div class="brand">
-                <div>STI Classroom System</div>
-                <span class="brand-badge">STI Marikina</span>
+                <div>Scheduling System</div>
+                <span class="brand-badge">Admin Portal</span>
             </div>
             
             <div class="nav-section">
@@ -357,7 +364,7 @@ $recentActivity = $stmt->fetchAll();
                 <div id="page-rooms" class="module-page">
                     <div class="card">
                         <div class="card-header">
-                            <h3 style="margin: 0; font-size: 1.1rem;">Classroom Inventory</h3>
+                            <h3 style="margin: 0; font-size: 1.1rem;">Room Information</h3>
                             <button class="btn btn-primary" onclick="openAddRoomModal()">Add Room</button>
                         </div>
                         <div class="card-body" style="padding: 0;">
@@ -368,7 +375,6 @@ $recentActivity = $stmt->fetchAll();
                                         <th>Floor</th>
                                         <th>Type</th>
                                         <th>Capacity</th>
-                                        <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -379,14 +385,6 @@ $recentActivity = $stmt->fetchAll();
                                         <td>Level <?= htmlspecialchars($room['floor_level']) ?></td>
                                         <td><?= htmlspecialchars($room['room_type']) ?></td>
                                         <td><?= htmlspecialchars($room['capacity']) ?> pax</td>
-                                        <td>
-                                            <?php
-                                                $badgeClass = 'badge-success';
-                                                if($room['current_status'] === 'Occupied') $badgeClass = 'badge-danger';
-                                                if($room['current_status'] === 'Reserved') $badgeClass = 'badge-warning';
-                                            ?>
-                                            <span class="badge <?= $badgeClass ?>"><?= htmlspecialchars($room['current_status']) ?></span>
-                                        </td>
                                         <td>
                                             <button class="btn btn-outline btn-sm" onclick="openRoomEditModal(<?= $room['room_id'] ?>, '<?= htmlspecialchars($room['room_name_number'], ENT_QUOTES) ?>', '<?= htmlspecialchars($room['room_type'], ENT_QUOTES) ?>', <?= $room['capacity'] ?>, <?= $room['floor_level'] ?>)">Edit</button>
                                         </td>
@@ -400,9 +398,67 @@ $recentActivity = $stmt->fetchAll();
 
                 <!-- Section 5: Users -->
                 <div id="page-users" class="module-page">
+                    <!-- Subject Roles Overview Grid -->
+                    <div class="card" style="margin-bottom: 20px;">
+                        <div class="card-header">
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.1rem; color: var(--accent-primary);">Subject Roles & Teaching Specializations</h3>
+                                <p style="margin: 4px 0 0 0; font-size: 0.825rem; color: var(--text-secondary);">Faculty members are strictly restricted to schedules matching their assigned subject role.</p>
+                            </div>
+                        </div>
+                        <div class="card-body" style="padding: 18px 24px;">
+                            <?php
+                                $roleCounts = [
+                                    'IT' => 0,
+                                    'Hospitality' => 0,
+                                    'Tourism' => 0,
+                                    'General Education' => 0,
+                                    'Business' => 0
+                                ];
+                                foreach($users as $u) {
+                                    if ($u['role'] === 'faculty') {
+                                        $sr = $u['subject_role'] ?? 'IT';
+                                        if (isset($roleCounts[$sr])) {
+                                            $roleCounts[$sr]++;
+                                        } else {
+                                            $roleCounts[$sr] = 1;
+                                        }
+                                    }
+                                }
+                            ?>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px;">
+                                <div style="background: #F8FAFD; border: 1.5px solid #BFDBFE; border-left: 4px solid #1D4ED8; padding: 12px 14px; border-radius: 8px;">
+                                    <div style="font-size: 0.75rem; font-weight: 700; color: #1D4ED8; text-transform: uppercase;">IT Faculty</div>
+                                    <div style="font-size: 1.4rem; font-weight: 800; color: #1E293B; margin-top: 4px;"><?= $roleCounts['IT'] ?? 0 ?> <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-secondary);">active</span></div>
+                                    <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">Programming, Systems, Labs</div>
+                                </div>
+                                <div style="background: #F8FAFD; border: 1.5px solid #FDE68A; border-left: 4px solid #B45309; padding: 12px 14px; border-radius: 8px;">
+                                    <div style="font-size: 0.75rem; font-weight: 700; color: #B45309; text-transform: uppercase;">Hospitality</div>
+                                    <div style="font-size: 1.4rem; font-weight: 800; color: #1E293B; margin-top: 4px;"><?= $roleCounts['Hospitality'] ?? 0 ?> <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-secondary);">active</span></div>
+                                    <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">Kitchen, Bar, HM Classes</div>
+                                </div>
+                                <div style="background: #F8FAFD; border: 1.5px solid #A7F3D0; border-left: 4px solid #047857; padding: 12px 14px; border-radius: 8px;">
+                                    <div style="font-size: 0.75rem; font-weight: 700; color: #047857; text-transform: uppercase;">Tourism</div>
+                                    <div style="font-size: 1.4rem; font-weight: 800; color: #1E293B; margin-top: 4px;"><?= $roleCounts['Tourism'] ?? 0 ?> <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-secondary);">active</span></div>
+                                    <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">Tourism Lab, TM Classes</div>
+                                </div>
+                                <div style="background: #F8FAFD; border: 1.5px solid #DDD6FE; border-left: 4px solid #6D28D9; padding: 12px 14px; border-radius: 8px;">
+                                    <div style="font-size: 0.75rem; font-weight: 700; color: #6D28D9; text-transform: uppercase;">General Education</div>
+                                    <div style="font-size: 1.4rem; font-weight: 800; color: #1E293B; margin-top: 4px;"><?= $roleCounts['General Education'] ?? 0 ?> <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-secondary);">active</span></div>
+                                    <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">GE, Math, Science, Comms</div>
+                                </div>
+                                <div style="background: #F8FAFD; border: 1.5px solid #FECDD3; border-left: 4px solid #BE123C; padding: 12px 14px; border-radius: 8px;">
+                                    <div style="font-size: 0.75rem; font-weight: 700; color: #BE123C; text-transform: uppercase;">Business</div>
+                                    <div style="font-size: 1.4rem; font-weight: 800; color: #1E293B; margin-top: 4px;"><?= $roleCounts['Business'] ?? 0 ?> <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-secondary);">active</span></div>
+                                    <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">Accounting, Management</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <div class="card-header">
-                            <h3 style="margin: 0; font-size: 1.1rem;">System Users</h3>
+                            <h3 style="margin: 0; font-size: 1.1rem;">System Users & Assigned Roles</h3>
                             <button class="btn btn-primary" onclick="openAddUserModal()">Add Faculty</button>
                         </div>
                         <div class="card-body" style="padding: 0;">
@@ -411,17 +467,48 @@ $recentActivity = $stmt->fetchAll();
                                     <tr>
                                         <th>Name</th>
                                         <th>Email</th>
-                                        <th>Role</th>
+                                        <th>System Role</th>
+                                        <th>Subject Role / Specialization</th>
                                         <th>Created</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach($users as $u): ?>
                                     <tr>
-                                        <td><?= htmlspecialchars($u['first_name'] . ' ' . $u['last_name']) ?></td>
+                                        <td style="font-weight: 500;"><?= htmlspecialchars($u['first_name'] . ' ' . $u['last_name']) ?></td>
                                         <td><?= htmlspecialchars($u['email']) ?></td>
-                                        <td><span class="role-badge role-<?= htmlspecialchars($u['role']) ?>"><?= htmlspecialchars($u['role']) ?></span></td>
+                                        <td><span class="role-badge role-<?= htmlspecialchars($u['role']) ?>"><?= htmlspecialchars(ucfirst($u['role'])) ?></span></td>
+                                        <td>
+                                            <?php if ($u['role'] === 'faculty'): ?>
+                                                <?php
+                                                    $sr = $u['subject_role'] ?? 'IT';
+                                                    $srClass = 'subject-it';
+                                                    if ($sr === 'Hospitality') $srClass = 'subject-hospitality';
+                                                    elseif ($sr === 'Tourism') $srClass = 'subject-tourism';
+                                                    elseif ($sr === 'General Education') $srClass = 'subject-gened';
+                                                    elseif ($sr === 'Business') $srClass = 'subject-business';
+                                                ?>
+                                                <span class="subject-badge <?= $srClass ?>">
+                                                    ● <?= htmlspecialchars($sr) ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="subject-badge subject-none">All Access (Admin)</span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td><?= date('M d, Y', strtotime($u['created_at'])) ?></td>
+                                        <td>
+                                            <div style="display:flex; gap:6px;">
+                                                <?php if ($u['role'] === 'faculty'): ?>
+                                                    <button class="btn btn-outline btn-sm" onclick="openEditSubjectRoleModal(<?= $u['user_id'] ?>, '<?= htmlspecialchars($u['first_name'] . ' ' . $u['last_name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($u['subject_role'] ?? 'IT', ENT_QUOTES) ?>')">Edit Role</button>
+                                                <?php endif; ?>
+                                                <?php if ($u['user_id'] != $user['user_id']): ?>
+                                                    <button class="btn btn-outline btn-sm" style="color:var(--danger); border-color:#fadbd8;" onclick="deleteUser(<?= $u['user_id'] ?>, '<?= htmlspecialchars($u['first_name'] . ' ' . $u['last_name'], ENT_QUOTES) ?>')">Remove</button>
+                                                <?php else: ?>
+                                                    <span style="color: var(--text-secondary); font-size: 0.75rem;">(You)</span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
                                     </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -470,13 +557,67 @@ $recentActivity = $stmt->fetchAll();
                     <input type="email" id="add-email" class="form-input">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" id="add-pass" class="form-input">
+                    <label class="form-label">System Role</label>
+                    <select id="add-role" class="form-input">
+                        <option value="faculty" selected>Faculty</option>
+                        <option value="program-head">Program Head</option>
+                        <option value="academic-head">Academic Head</option>
+                        <option value="admin">System Administrator</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password <span style="font-size:0.75rem; color:var(--text-secondary); font-weight:normal;">(default: password)</span></label>
+                    <input type="password" id="add-pass" class="form-input" placeholder="Leave blank for default 'password'">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Subject Role / Specialization</label>
+                    <select id="add-subject-role" class="form-input">
+                        <option value="IT">IT (Information Technology)</option>
+                        <option value="Hospitality">Hospitality (Kitchen / Bar / HM)</option>
+                        <option value="Tourism">Tourism (Tourism Lab / TM)</option>
+                        <option value="General Education">General Education (GE / Math / Sci)</option>
+                        <option value="Business">Business (Business Administration)</option>
+                    </select>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; display: block;">Faculty will only be eligible to teach classes matching this subject category.</span>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline" onclick="closeAddUserModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="submitAddUser()">Save Faculty</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Subject Role Modal -->
+    <div class="modal-overlay" id="editSubjectRoleModal">
+        <div class="modal" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3 style="margin: 0;">Edit Subject Role</h3>
+                <button class="btn btn-outline btn-sm" onclick="closeEditSubjectRoleModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-role-user-id" value="">
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">Faculty Member:</div>
+                    <div style="font-size: 1.05rem; font-weight: 700; color: var(--accent-primary);" id="edit-role-user-name"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Assigned Subject Role</label>
+                    <select id="edit-role-select" class="form-input">
+                        <option value="IT">IT (Information Technology)</option>
+                        <option value="Hospitality">Hospitality (Kitchen / Bar / HM)</option>
+                        <option value="Tourism">Tourism (Tourism Lab / TM)</option>
+                        <option value="General Education">General Education (GE / Math / Sci)</option>
+                        <option value="Business">Business (Business Administration)</option>
+                    </select>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 6px; display: block;">
+                        <strong>Teaching Limit:</strong> This faculty will only be permitted to take schedules within this subject category.
+                    </span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeEditSubjectRoleModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitEditSubjectRole()">Update Role</button>
             </div>
         </div>
     </div>
@@ -500,13 +641,26 @@ $recentActivity = $stmt->fetchAll();
                     </select>
                 </div>
                 <div class="form-group">
+                    <label class="form-label">Subject Category / Specialization</label>
+                    <select id="sched-subject-category" class="form-input">
+                        <option value="IT">IT (Information Technology)</option>
+                        <option value="Hospitality">Hospitality</option>
+                        <option value="Tourism">Tourism</option>
+                        <option value="General Education">General Education</option>
+                        <option value="Business">Business</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label class="form-label">Faculty</label>
                     <select id="sched-faculty" class="form-input">
-                        <option value="">-- Select Faculty --</option>
+                        <option value="" data-role="">-- Select Faculty --</option>
                         <?php foreach($faculty as $f): ?>
-                            <option value="<?= $f['user_id'] ?>"><?= htmlspecialchars($f['first_name'] . ' ' . $f['last_name']) ?></option>
+                            <option value="<?= $f['user_id'] ?>" data-role="<?= htmlspecialchars($f['subject_role'] ?? 'IT') ?>">
+                                <?= htmlspecialchars($f['first_name'] . ' ' . $f['last_name']) ?> (<?= htmlspecialchars($f['subject_role'] ?? 'IT') ?>)
+                            </option>
                         <?php endforeach; ?>
                     </select>
+                    <span id="sched-faculty-role-hint" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; display: block;"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Subject Code</label>
@@ -698,10 +852,20 @@ $recentActivity = $stmt->fetchAll();
                         });
                         
                         if(cellData) {
+                            let cat = cellData.subject_category || 'IT';
+                            let badgeStyle = 'background: #DBEAFE; color: #1E40AF;';
+                            if (cat === 'Hospitality') badgeStyle = 'background: #FEF3C7; color: #92400E;';
+                            else if (cat === 'Tourism') badgeStyle = 'background: #D1FAE5; color: #065F46;';
+                            else if (cat === 'General Education') badgeStyle = 'background: #EDE9FE; color: #5B21B6;';
+                            else if (cat === 'Business') badgeStyle = 'background: #FFE4E6; color: #9F1239;';
+
                             tr.innerHTML += `<td><div class="schedule-block" style="cursor:pointer;" onclick="openEditScheduleModal(${cellData.schedule_id})" title="Click to edit">
-                                <strong>${cellData.subject_code}</strong><br>
-                                ${cellData.section_name}<br>
-                                ${cellData.faculty_name}
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                                    <strong>${cellData.subject_code}</strong>
+                                    <span style="font-size:0.65rem; font-weight:700; padding:1px 5px; border-radius:4px; ${badgeStyle}">${cat}</span>
+                                </div>
+                                <div style="color:var(--text-secondary); font-size:0.75rem;">${cellData.section_name}</div>
+                                <div style="font-weight:600; color:var(--text-primary); margin-top:2px;">${cellData.faculty_name}</div>
                             </div></td>`;
                         } else {
                             tr.innerHTML += `<td></td>`;
@@ -716,17 +880,32 @@ $recentActivity = $stmt->fetchAll();
         document.getElementById('sched-day-filter').addEventListener('change', loadSchedules);
         document.getElementById('sched-floor-filter').addEventListener('change', loadSchedules);
 
+        // Faculty selection change listener to check role vs selected category
+        document.getElementById('sched-faculty').addEventListener('change', function() {
+            const selectedOpt = this.options[this.selectedIndex];
+            const facultyRole = selectedOpt.getAttribute('data-role');
+            const hint = document.getElementById('sched-faculty-role-hint');
+            if (facultyRole) {
+                hint.textContent = `Assigned Subject Role: ${facultyRole}`;
+                hint.style.color = 'var(--accent-primary)';
+            } else {
+                hint.textContent = '';
+            }
+        });
+
         // Schedule CRUD
         function openAddScheduleModal() {
             document.getElementById('scheduleModalTitle').textContent = 'Add Schedule';
             document.getElementById('sched-id').value = '';
             document.getElementById('sched-room').value = '';
             document.getElementById('sched-faculty').value = '';
+            document.getElementById('sched-subject-category').value = 'IT';
             document.getElementById('sched-subject').value = '';
             document.getElementById('sched-section').value = '';
             document.getElementById('sched-day').value = document.getElementById('sched-day-filter').value;
             document.getElementById('sched-start').value = '07:00';
             document.getElementById('sched-end').value = '08:30';
+            document.getElementById('sched-faculty-role-hint').textContent = '';
             document.getElementById('sched-delete-btn').style.display = 'none';
             document.getElementById('scheduleModal').style.display = 'flex';
         }
@@ -738,11 +917,22 @@ $recentActivity = $stmt->fetchAll();
             document.getElementById('sched-id').value = s.schedule_id;
             document.getElementById('sched-room').value = s.room_id;
             document.getElementById('sched-faculty').value = s.faculty_id;
+            document.getElementById('sched-subject-category').value = s.subject_category || 'IT';
             document.getElementById('sched-subject').value = s.subject_code;
             document.getElementById('sched-section').value = s.section_name;
             document.getElementById('sched-day').value = s.day_of_week;
             document.getElementById('sched-start').value = s.start_time.substring(0, 5);
             document.getElementById('sched-end').value = s.end_time.substring(0, 5);
+            
+            const hint = document.getElementById('sched-faculty-role-hint');
+            const facultyOpt = document.querySelector(`#sched-faculty option[value="${s.faculty_id}"]`);
+            if (facultyOpt && facultyOpt.getAttribute('data-role')) {
+                hint.textContent = `Assigned Subject Role: ${facultyOpt.getAttribute('data-role')}`;
+                hint.style.color = 'var(--accent-primary)';
+            } else {
+                hint.textContent = '';
+            }
+
             document.getElementById('sched-delete-btn').style.display = 'inline-block';
             document.getElementById('scheduleModal').style.display = 'flex';
         }
@@ -754,10 +944,23 @@ $recentActivity = $stmt->fetchAll();
         function submitSchedule() {
             const schedId = document.getElementById('sched-id').value;
             const action = schedId ? 'edit' : 'add';
+            const facultySelect = document.getElementById('sched-faculty');
+            const selectedFacultyOpt = facultySelect.options[facultySelect.selectedIndex];
+            const facultyRole = selectedFacultyOpt ? selectedFacultyOpt.getAttribute('data-role') : '';
+            const subjectCategory = document.getElementById('sched-subject-category').value;
+
+            // Client-side Subject Role Restriction check
+            if (facultyRole && facultyRole.toLowerCase() !== subjectCategory.toLowerCase()) {
+                const facultyName = selectedFacultyOpt.text.split('(')[0].trim();
+                alert(`Subject Role Limitation Warning:\n\n${facultyName} is assigned to the "${facultyRole}" role and cannot teach "${subjectCategory}" classes.\n\nPlease assign a faculty member with the "${subjectCategory}" role or change the category.`);
+                return;
+            }
+
             const payload = {
                 action: action,
                 room_id: document.getElementById('sched-room').value,
-                faculty_id: document.getElementById('sched-faculty').value,
+                faculty_id: facultySelect.value,
+                subject_category: subjectCategory,
                 subject_code: document.getElementById('sched-subject').value,
                 section_name: document.getElementById('sched-section').value,
                 day_of_week: document.getElementById('sched-day').value,
@@ -920,20 +1123,31 @@ $recentActivity = $stmt->fetchAll();
         function closeAddUserModal() { document.getElementById('addUserModal').style.display = 'none'; }
         
         function submitAddUser() {
-            const fname = document.getElementById('add-fname').value;
-            const lname = document.getElementById('add-lname').value;
-            const email = document.getElementById('add-email').value;
-            const pass = document.getElementById('add-pass').value;
+            const fname = document.getElementById('add-fname').value.trim();
+            const lname = document.getElementById('add-lname').value.trim();
+            const email = document.getElementById('add-email').value.trim();
+            const pass = document.getElementById('add-pass').value.trim() || 'password';
+            const role = document.getElementById('add-role').value || 'faculty';
+            const subjectRole = document.getElementById('add-subject-role').value;
 
-            if(!fname || !lname || !email || !pass) {
-                alert('Please fill all fields');
+            if(!fname || !lname || !email) {
+                alert('Please fill all required fields');
                 return;
             }
 
             fetch('/api/users.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'add', first_name: fname, last_name: lname, email: email, password: pass, role: 'faculty', csrf_token: csrfToken })
+                body: JSON.stringify({
+                    action: 'add',
+                    first_name: fname,
+                    last_name: lname,
+                    email: email,
+                    password: pass,
+                    role: role,
+                    subject_role: subjectRole,
+                    csrf_token: csrfToken
+                })
             })
             .then(res => res.json())
             .then(data => {
@@ -942,6 +1156,77 @@ $recentActivity = $stmt->fetchAll();
                 } else {
                     alert('Error: ' + data.message);
                 }
+            });
+        }
+
+        // Edit Subject Role Modal
+        function openEditSubjectRoleModal(userId, userName, currentRole) {
+            document.getElementById('edit-role-user-id').value = userId;
+            document.getElementById('edit-role-user-name').textContent = userName;
+            document.getElementById('edit-role-select').value = currentRole || 'IT';
+            document.getElementById('editSubjectRoleModal').style.display = 'flex';
+        }
+
+        function closeEditSubjectRoleModal() {
+            document.getElementById('editSubjectRoleModal').style.display = 'none';
+        }
+
+        function submitEditSubjectRole() {
+            const userId = document.getElementById('edit-role-user-id').value;
+            const subjectRole = document.getElementById('edit-role-select').value;
+
+            if (!userId || !subjectRole) {
+                alert('Invalid user or role selection.');
+                return;
+            }
+
+            fetch('/api/users.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'edit_subject_role',
+                    user_id: userId,
+                    subject_role: subjectRole,
+                    csrf_token: csrfToken
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(err => {
+                alert('Network error while updating subject role.');
+            });
+        }
+
+        function deleteUser(userId, userName) {
+            if (!confirm(`Are you sure you want to remove the account for ${userName}? This action cannot be undone.`)) {
+                return;
+            }
+
+            fetch('/api/users.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'delete',
+                    user_id: userId,
+                    csrf_token: csrfToken
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(err => {
+                alert('Network error while removing account.');
             });
         }
     </script>

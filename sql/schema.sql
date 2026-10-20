@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────────────────────
--- STI Classroom System — Database Schema
+-- Scheduling System — Database Schema
 -- Import this into your Aiven MySQL database via the Aiven
 -- web console (Query Editor) or via mysql CLI:
 --   mysql -h HOST -P PORT -u USER -p --ssl-mode=REQUIRED DB < schema.sql
@@ -26,7 +26,8 @@ CREATE TABLE users (
     last_name VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'faculty') NOT NULL,
+    role ENUM('admin', 'academic-head', 'program-head', 'faculty') NOT NULL,
+    subject_role VARCHAR(50) DEFAULT 'IT',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -35,6 +36,7 @@ CREATE TABLE schedules (
     room_id INT NOT NULL,
     faculty_id INT NOT NULL,
     subject_code VARCHAR(20) NOT NULL,
+    subject_category VARCHAR(50) DEFAULT 'IT',
     section_name VARCHAR(20) NOT NULL,
     day_of_week ENUM('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat') NOT NULL,
     start_time TIME NOT NULL,
@@ -97,35 +99,34 @@ INSERT INTO classrooms (room_name_number, room_type, capacity, floor_level) VALU
 -- Seed Data: Users
 -- Note: 'password' is used as a placeholder hash ($2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi)
 -- PLEASE REGENERATE HASHES in production!
-INSERT INTO users (first_name, last_name, email, password_hash, role) VALUES
-('Admin', 'User', 'admin@sti.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin'),
-('Faculty', 'One', 'faculty1@sti.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'faculty'),
-('Faculty', 'Two', 'faculty2@sti.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'faculty'),
-('Faculty', 'Three', 'faculty3@sti.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'faculty');
+INSERT INTO users (first_name, last_name, email, password_hash, role, subject_role) VALUES
+('System', 'Administrator', 'admin@sti.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', NULL),
+('Academic', 'Head', 'acah@sti.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'faculty', 'IT'),
+('Program', 'Head', 'proh@sti.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'faculty', 'IT');
 
 -- Seed Data: Schedules
-INSERT INTO schedules (room_id, faculty_id, subject_code, section_name, day_of_week, start_time, end_time) VALUES
-(1, 2, 'IT101', 'BSIT-1A', 'Mon', '08:00:00', '10:00:00'),
-(7, 3, 'GE101', 'BSIT-1B', 'Tue', '10:30:00', '12:00:00'),
-(5, 4, 'HM101', 'BSHM-1A', 'Wed', '13:00:00', '16:00:00'),
-(22, 4, 'TM101', 'BSTM-1A', 'Thu', '09:00:00', '11:00:00'),
-(2, 2, 'IT201', 'BSIT-2A', 'Fri', '14:00:00', '16:00:00'),
-(12, 3, 'GE102', 'BSIT-2B', 'Mon', '11:00:00', '13:00:00'),
-(8, 2, 'IT301', 'BSIT-3A', 'Tue', '07:30:00', '09:30:00'),
-(6, 4, 'HM201', 'BSHM-2A', 'Wed', '16:00:00', '18:00:00'),
-(3, 2, 'IT401', 'BSIT-4A', 'Sat', '08:00:00', '12:00:00'),
-(15, 3, 'GE201', 'BSIT-1A', 'Thu', '14:00:00', '15:30:00');
+INSERT INTO schedules (room_id, faculty_id, subject_code, subject_category, section_name, day_of_week, start_time, end_time) VALUES
+(1, 2, 'IT101', 'IT', 'BSIT-1A', 'Mon', '08:00:00', '10:00:00'),
+(7, 3, 'GE101', 'General Education', 'BSIT-1B', 'Tue', '10:30:00', '12:00:00'),
+(5, 3, 'HM101', 'Hospitality', 'BSHM-1A', 'Wed', '13:00:00', '16:00:00'),
+(22, 3, 'HM102', 'Hospitality', 'BSTM-1A', 'Thu', '09:00:00', '11:00:00'),
+(2, 2, 'IT201', 'IT', 'BSIT-2A', 'Fri', '14:00:00', '16:00:00'),
+(12, 3, 'GE102', 'General Education', 'BSIT-2B', 'Mon', '11:00:00', '13:00:00'),
+(8, 2, 'IT301', 'IT', 'BSIT-3A', 'Tue', '07:30:00', '09:30:00'),
+(6, 2, 'HM201', 'Hospitality', 'BSHM-2A', 'Wed', '16:00:00', '18:00:00'),
+(3, 2, 'IT401', 'IT', 'BSIT-4A', 'Sat', '08:00:00', '12:00:00'),
+(15, 3, 'GE201', 'General Education', 'BSIT-1A', 'Thu', '14:00:00', '15:30:00');
 
 -- Seed Data: Room Requests
 INSERT INTO room_requests (room_id, faculty_id, request_date, start_time, end_time, purpose, status) VALUES
 (10, 2, '2026-09-15', '09:00:00', '11:00:00', 'Make-up class for IT101', 'Approved'),
 (18, 3, '2026-09-16', '13:00:00', '15:00:00', 'Extra consultation hours', 'Pending'),
 (4, 2, '2026-09-17', '10:00:00', '12:00:00', 'Special project presentation', 'Declined'),
-(21, 4, '2026-09-18', '15:00:00', '17:00:00', 'Guest speaker seminar', 'Pending');
+(21, 3, '2026-09-18', '15:00:00', '17:00:00', 'Guest speaker seminar', 'Pending');
 
 -- Seed Data: Session Logs
 INSERT INTO session_logs (room_id, faculty_id, session_date, actual_start_time, actual_end_time) VALUES
 (1, 2, '2026-09-10', '2026-09-10 08:02:00', '2026-09-10 10:05:00'),
 (7, 3, '2026-09-10', '2026-09-10 10:25:00', '2026-09-10 12:00:00'),
-(5, 4, '2026-09-10', '2026-09-10 13:05:00', NULL),
-(22, 4, '2026-09-11', '2026-09-11 08:55:00', '2026-09-11 11:02:00');
+(5, 3, '2026-09-10', '2026-09-10 13:05:00', NULL),
+(22, 3, '2026-09-11', '2026-09-11 08:55:00', '2026-09-11 11:02:00');
