@@ -1,0 +1,3684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STI Marikina · AI-Assisted Classroom Scheduling System</title>
+  <style>
+    /* ─────────────────────────────────────────────
+       DESIGN TOKENS — Psychological Color Palette
+       ───────────────────────────────────────────── */
+    :root {
+      --bg-primary: #FAF9F5;
+      --bg-secondary: #FFFFFF;
+      --accent-primary: #25447A;
+      --accent-hover: #1A3057;
+      --text-primary: #2C303A;
+      --text-secondary: #5C6375;
+      --text-on-accent: #FFFFFF;
+      --border-subtle: #E2E4E9;
+      --shadow-float: 0 8px 30px rgba(44, 48, 58, 0.04);
+
+      /* Extended palette */
+      --success: #2E7D5B;
+      --success-bg: #E8F5EE;
+      --warning: #C27A1A;
+      --warning-bg: #FFF4E0;
+      --danger: #C0392B;
+      --danger-bg: #FDECEB;
+      --info: #2980B9;
+      --info-bg: #E8F4FD;
+      --sidebar-w: 260px;
+      --header-h: 64px;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ─────────── RESET & BASE ─────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 14px; -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* ─────────── LOGIN PAGE ─────────── */
+    .login-page {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .login-page.hidden {
+      opacity: 0;
+      transform: scale(1.02);
+      pointer-events: none;
+    }
+    .login-page::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(37,68,122,0.04) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(37,68,122,0.03) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .login-container {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      padding: 0 20px;
+    }
+    .login-brand {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .login-logo {
+      width: 64px; height: 64px;
+      background: var(--accent-primary);
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-on-accent);
+      font-weight: 900;
+      font-size: 22px;
+      letter-spacing: -0.5px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 30px rgba(37,68,122,0.2);
+    }
+    .login-brand h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .login-brand p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .login-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-float);
+      padding: 32px;
+    }
+    .login-card h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .login-card .login-subtitle {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+    .login-field { margin-bottom: 18px; }
+    .login-field label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .login-field input,
+    .login-field select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .login-field input:focus,
+    .login-field select:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(37,68,122,0.08);
+    }
+    .login-field input::placeholder { color: #A0A5B2; }
+    .login-field .field-icon {
+      position: relative;
+    }
+    .login-field .field-icon svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px; height: 16px;
+      color: var(--text-secondary);
+      pointer-events: none;
+    }
+    .login-field .field-icon input,
+    .login-field .field-icon select {
+      padding-left: 38px;
+    }
+    .login-extras {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+    .login-remember {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .login-remember input[type="checkbox"] {
+      width: 16px; height: 16px;
+      accent-color: var(--accent-primary);
+      cursor: pointer;
+    }
+    .login-forgot {
+      font-size: 12.5px;
+      color: var(--accent-primary);
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .login-forgot:hover { text-decoration: underline; }
+    .btn-login {
+      width: 100%;
+      padding: 11px 20px;
+      background: var(--accent-primary);
+      color: var(--text-on-accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-login:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,68,122,0.25); }
+    .btn-login:active { transform: translateY(0); }
+    .btn-login.loading {
+      pointer-events: none;
+      opacity: 0.85;
+    }
+    .btn-login .spinner {
+      width: 16px; height: 16px;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: none;
+    }
+    .btn-login.loading .spinner { display: block; }
+    .btn-login.loading .btn-text { display: none; }
+    .btn-login.loading::after { content: 'Authenticating…'; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .login-footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .login-footer a { color: var(--accent-primary); font-weight: 600; text-decoration: none; }
+    .login-error {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid #F0C1BC;
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 12.5px;
+      font-weight: 500;
+      margin-bottom: 18px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+    .login-error.show { display: flex; }
+
+    /* ─────────── LAYOUT SHELL ─────────── */
+    .app { display: flex; height: 100vh; display: none; }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      box-shadow: 2px 0 20px rgba(44, 48, 58, 0.03);
+    }
+    .sidebar-brand {
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .sidebar-brand .logo {
+      width: 38px; height: 38px;
+      background: var(--accent-primary);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-on-accent);
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: -0.5px;
+    }
+    .sidebar-brand h1 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.25;
+    }
+    .sidebar-brand span {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    .sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+    .nav-section {
+      margin-bottom: 24px;
+    }
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text-secondary);
+      padding: 0 10px;
+      margin-bottom: 6px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition);
+      position: relative;
+      user-select: none;
+    }
+    .nav-item:hover { background: var(--bg-primary); color: var(--text-primary); }
+    .nav-item.active {
+      background: #EEF1F7;
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 20px;
+      background: var(--accent-primary);
+      border-radius: 0 3px 3px 0;
+    }
+    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; }
+    .nav-item.active svg { opacity: 1; }
+    .nav-badge {
+      margin-left: auto;
+      background: var(--danger);
+      color: var(--text-on-accent);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 10px;
+    }
+
+    .sidebar-footer {
+      padding: 16px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-footer .avatar {
+      width: 34px; height: 34px;
+      background: var(--accent-primary);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-on-accent);
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .sidebar-footer .user-info { flex: 1; }
+    .sidebar-footer .user-name { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+    .sidebar-footer .user-role { font-size: 11px; color: var(--text-secondary); }
+
+    /* ─── MAIN AREA ─── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ─── TOP HEADER ─── */
+    .header {
+      height: var(--header-h);
+      min-height: var(--header-h);
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 16px;
+      box-shadow: 0 1px 8px rgba(44, 48, 58, 0.02);
+    }
+    .header-title { flex: 1; }
+    .header-title h2 { font-size: 17px; font-weight: 700; color: var(--text-primary); }
+    .header-title p { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 8px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--accent-primary);
+      color: var(--text-on-accent);
+    }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,68,122,0.25); }
+    .btn-outline {
+      background: transparent;
+      color: var(--accent-primary);
+      border: 1.5px solid var(--border-subtle);
+    }
+    .btn-outline:hover { border-color: var(--accent-primary); background: #F4F6FA; }
+    .btn-icon {
+      width: 36px; height: 36px; padding: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: transparent;
+      border: 1.5px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all var(--transition);
+    }
+    .btn-icon:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+
+    /* ─── CONTENT AREA ─── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 28px;
+    }
+    .content::-webkit-scrollbar { width: 6px; }
+    .content::-webkit-scrollbar-track { background: transparent; }
+    .content::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 3px; }
+
+    /* ─── CARDS (Antigravity Elevation) ─── */
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-float);
+      transition: box-shadow var(--transition), transform var(--transition);
+    }
+    .card:hover {
+      box-shadow: 0 12px 40px rgba(44, 48, 58, 0.07);
+    }
+    .card-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .card-header h3 {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .card-header p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .card-body { padding: 20px 22px; }
+
+    /* ─── MODULE PAGES ─── */
+    .module-page { display: none; }
+    .module-page.active { display: block; }
+
+    /* ─── STAT CARDS ROW ─── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-float);
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: all var(--transition);
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(44,48,58,0.07); }
+    .stat-icon {
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .stat-icon.blue { background: #EEF1F7; color: var(--accent-primary); }
+    .stat-icon.green { background: var(--success-bg); color: var(--success); }
+    .stat-icon.orange { background: var(--warning-bg); color: var(--warning); }
+    .stat-icon.red { background: var(--danger-bg); color: var(--danger); }
+    .stat-value { font-size: 24px; font-weight: 800; color: var(--text-primary); line-height: 1; }
+    .stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* ═══════════════════════════════════════
+       MODULE 1 — INTERACTIVE SCHEDULE GRID
+       ═══════════════════════════════════════ */
+    .grid-controls {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .filter-group {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .filter-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    select, input[type="text"], input[type="search"] {
+      padding: 7px 12px;
+      border: 1.5px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    select:focus, input:focus { border-color: var(--accent-primary); }
+
+    .schedule-grid {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--bg-secondary);
+      box-shadow: var(--shadow-float);
+    }
+    .schedule-grid thead th {
+      background: var(--accent-primary);
+      color: var(--text-on-accent);
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 12px 10px;
+      text-align: center;
+      border-right: 1px solid rgba(255,255,255,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .schedule-grid thead th:first-child { text-align: left; padding-left: 16px; }
+    .schedule-grid thead th:last-child { border-right: none; }
+    .schedule-grid tbody td {
+      padding: 6px;
+      border-bottom: 1px solid var(--border-subtle);
+      border-right: 1px solid var(--border-subtle);
+      vertical-align: top;
+      min-width: 130px;
+      height: 68px;
+      position: relative;
+    }
+    .schedule-grid tbody td:last-child { border-right: none; }
+    .schedule-grid tbody tr:last-child td { border-bottom: none; }
+    .schedule-grid tbody td:first-child {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 100px;
+      background: #FAFBFC;
+      vertical-align: middle;
+      padding-left: 16px;
+    }
+    .schedule-grid tbody td.drop-zone {
+      transition: background var(--transition);
+    }
+    .schedule-grid tbody td.drop-zone.drag-over {
+      background: #EEF1F7;
+      outline: 2px dashed var(--accent-primary);
+      outline-offset: -3px;
+    }
+
+    /* Schedule blocks */
+    .schedule-block {
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      line-height: 1.35;
+      cursor: grab;
+      transition: all var(--transition);
+      position: relative;
+      border-left: 3px solid;
+      user-select: none;
+    }
+    .schedule-block:active { cursor: grabbing; }
+    .schedule-block:hover { transform: scale(1.02); z-index: 5; }
+    .schedule-block.ai-generated {
+      background: #EEF1F7;
+      border-left-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+    .schedule-block.manual-override {
+      background: var(--warning-bg);
+      border-left-color: var(--warning);
+      color: #7A5A1A;
+    }
+    .schedule-block.conflict {
+      background: var(--danger-bg);
+      border-left-color: var(--danger);
+      color: var(--danger);
+      animation: conflict-pulse 2s ease-in-out infinite;
+    }
+    .schedule-block .block-subject { font-weight: 700; font-size: 11.5px; }
+    .schedule-block .block-meta { font-size: 10px; opacity: 0.8; margin-top: 2px; }
+    .schedule-block.dragging { opacity: 0.4; transform: rotate(2deg); }
+
+    @keyframes conflict-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); }
+      50% { box-shadow: 0 0 0 4px rgba(192, 57, 43, 0.12); }
+    }
+
+    /* ═════════════════════════════════════
+       MODULE 2 — CAMPUS MINI MAP
+       ═════════════════════════════════════ */
+    .minimap-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 20px;
+    }
+    .floor-map {
+      position: relative;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-float);
+      overflow: hidden;
+      min-height: 420px;
+    }
+    .floor-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .floor-tab {
+      padding: 10px 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition);
+    }
+    .floor-tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+    .floor-tab:hover { color: var(--text-primary); }
+    .floor-canvas {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    .room-cell {
+      border: 1.5px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 14px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      position: relative;
+    }
+    .room-cell:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(44,48,58,0.08); }
+    .room-cell.available { background: var(--success-bg); border-color: var(--success); }
+    .room-cell.occupied { background: var(--danger-bg); border-color: #E8A9A3; }
+    .room-cell.partial { background: var(--warning-bg); border-color: #E0C07A; }
+    .room-cell .room-id { font-size: 13px; font-weight: 800; color: var(--text-primary); }
+    .room-cell .room-type { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+    .room-cell .room-status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      position: absolute;
+      top: 8px; right: 8px;
+    }
+    .room-cell.available .room-status-dot { background: var(--success); }
+    .room-cell.occupied .room-status-dot { background: var(--danger); }
+    .room-cell.partial .room-status-dot { background: var(--warning); }
+
+    .utilization-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .util-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-float);
+      padding: 18px;
+    }
+    .util-card h4 { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; }
+    .util-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .util-bar-label { font-size: 11.5px; color: var(--text-secondary); width: 50px; flex-shrink: 0; }
+    .util-bar-track {
+      flex: 1; height: 8px; background: #ECEEF2; border-radius: 4px; overflow: hidden;
+    }
+    .util-bar-fill {
+      height: 100%; border-radius: 4px; transition: width 0.6s ease;
+    }
+    .util-bar-value { font-size: 11px; font-weight: 700; width: 36px; text-align: right; }
+
+    .legend-row { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+    /* ═════════════════════════════════════
+       MODULE 3 — ROOM INVENTORY
+       ═════════════════════════════════════ */
+    .data-table-wrapper {
+      overflow-x: auto;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .data-table thead th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-secondary);
+      border-bottom: 2px solid var(--border-subtle);
+      white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .data-table tbody tr:hover { background: #FAFBFC; }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-lecture { background: #EEF1F7; color: var(--accent-primary); }
+    .badge-lab { background: #F0E6F6; color: #6C3483; }
+    .badge-success { background: var(--success-bg); color: var(--success); }
+    .badge-warning { background: var(--warning-bg); color: var(--warning); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger); }
+
+    .capacity-bar {
+      width: 80px; height: 6px; background: #ECEEF2; border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; margin-left: 6px;
+    }
+    .capacity-bar-fill { height: 100%; border-radius: 3px; }
+
+    /* ═════════════════════════════════════
+       MODULE 4 — FACULTY PROFILING
+       ═════════════════════════════════════ */
+    .faculty-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    .faculty-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-float);
+      overflow: hidden;
+      transition: all var(--transition);
+    }
+    .faculty-card:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(44,48,58,0.08); }
+    .faculty-card-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 18px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .faculty-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 15px;
+      color: var(--text-on-accent);
+    }
+    .faculty-name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .faculty-dept { font-size: 11.5px; color: var(--text-secondary); }
+    .faculty-body { padding: 16px 18px; }
+    .faculty-meta-row {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
+    }
+    .faculty-meta-label { font-size: 11.5px; color: var(--text-secondary); }
+    .faculty-meta-value { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+    .avail-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+      margin-top: 10px;
+    }
+    .avail-slot {
+      padding: 4px 2px;
+      text-align: center;
+      border-radius: 4px;
+      font-size: 9.5px;
+      font-weight: 600;
+    }
+    .avail-slot.open { background: var(--success-bg); color: var(--success); }
+    .avail-slot.busy { background: #ECEEF2; color: var(--text-secondary); }
+    .avail-slot.header { background: none; color: var(--text-secondary); font-weight: 700; font-size: 9px; }
+    .qual-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+    .qual-tag {
+      padding: 3px 9px;
+      border-radius: 5px;
+      font-size: 10.5px;
+      font-weight: 600;
+      background: #EEF1F7;
+      color: var(--accent-primary);
+      border: 1px solid #D8DEE9;
+    }
+    .qual-tag.locked::after { content: ' 🔒'; font-size: 9px; }
+
+    /* ═════════════════════════════════════
+       MODULE 5 — SYSTEM ADMIN / CMS
+       ═════════════════════════════════════ */
+    .settings-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 20px;
+    }
+    .settings-tabs {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .settings-tab {
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .settings-tab:hover { background: var(--bg-primary); color: var(--text-primary); }
+    .settings-tab.active { background: #EEF1F7; color: var(--accent-primary); font-weight: 600; }
+
+    .form-group { margin-bottom: 20px; }
+    .form-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .form-hint { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+    .form-input {
+      width: 100%;
+      padding: 9px 14px;
+      border: 1.5px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    .form-input:focus { border-color: var(--accent-primary); }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .toggle-label { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .toggle-desc { font-size: 11.5px; color: var(--text-secondary); margin-top: 2px; }
+    .toggle-switch {
+      width: 42px; height: 24px;
+      background: #CDD1DA;
+      border-radius: 12px;
+      cursor: pointer;
+      position: relative;
+      transition: background var(--transition);
+      flex-shrink: 0;
+    }
+    .toggle-switch.on { background: var(--accent-primary); }
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 18px; height: 18px;
+      background: white;
+      border-radius: 50%;
+      transition: transform var(--transition);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .toggle-switch.on::after { transform: translateX(18px); }
+
+    /* ═════════════════════════════════════
+       MODULE 6 — USER MANAGEMENT
+       ═════════════════════════════════════ */
+    .role-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .role-admin { background: var(--accent-primary); color: var(--text-on-accent); }
+    .role-academic-head { background: #EEF1F7; color: var(--accent-primary); border: 1px solid #C8D2E4; }
+    .role-program-head { background: var(--success-bg); color: var(--success); border: 1px solid #B8DFC8; }
+    .role-viewer { background: #F2F2F2; color: var(--text-secondary); border: 1px solid var(--border-subtle); }
+
+    .access-matrix {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+    .access-matrix th {
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-secondary);
+      border-bottom: 2px solid var(--border-subtle);
+      text-align: center;
+    }
+    .access-matrix th:first-child { text-align: left; }
+    .access-matrix td {
+      padding: 10px 14px;
+      font-size: 12.5px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-subtle);
+      text-align: center;
+    }
+    .access-matrix td:first-child { text-align: left; font-weight: 500; }
+    .access-check { color: var(--success); font-weight: 700; font-size: 16px; }
+    .access-deny { color: #CDD1DA; font-size: 16px; }
+
+    /* ─── CONFLICT ALERT TOAST ─── */
+    .conflict-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--danger);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 40px rgba(192, 57, 43, 0.15);
+      padding: 18px 22px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      max-width: 400px;
+      z-index: 1000;
+      transform: translateY(120%);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .conflict-toast.show { transform: translateY(0); opacity: 1; }
+    .conflict-toast .toast-icon {
+      width: 36px; height: 36px;
+      background: var(--danger-bg);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--danger);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .conflict-toast .toast-title { font-size: 13.5px; font-weight: 700; color: var(--danger); }
+    .conflict-toast .toast-msg { font-size: 12px; color: var(--text-secondary); margin-top: 3px; line-height: 1.5; }
+    .conflict-toast .toast-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .conflict-toast .toast-btn {
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .toast-btn-resolve { background: var(--danger); color: white; }
+    .toast-btn-resolve:hover { background: #A93226; }
+    .toast-btn-dismiss { background: #F2F2F2; color: var(--text-secondary); }
+    .toast-btn-dismiss:hover { background: var(--border-subtle); }
+
+    /* ─── AI STATUS INDICATOR ─── */
+    .ai-status {
+      display: flex; align-items: center; gap: 7px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .ai-status.active { background: var(--success-bg); color: var(--success); }
+    .ai-status.processing { background: var(--info-bg); color: var(--info); }
+    .ai-status .ai-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: ai-pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes ai-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ─── SEARCH BAR ─── */
+    .search-bar {
+      position: relative;
+      max-width: 260px;
+    }
+    .search-bar input {
+      width: 100%;
+      padding: 7px 12px 7px 34px;
+    }
+    .search-bar svg {
+      position: absolute; left: 10px; top: 50%;
+      transform: translateY(-50%);
+      width: 16px; height: 16px;
+      color: var(--text-secondary);
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 1100px) {
+      .minimap-layout { grid-template-columns: 1fr; }
+      .settings-layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 800px) {
+      .sidebar { display: none; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ═══════════════════════ LOGIN PAGE ═══════════════════════ -->
+  <div class="login-page" id="loginPage">
+    <div class="login-container">
+      <div class="login-brand">
+        <div class="login-logo">STI</div>
+        <h1>AI-Assisted Classroom Scheduling</h1>
+        <p>STI College Marikina · Centralized Academic Planning System</p>
+      </div>
+
+      <div class="login-card">
+        <h2>Welcome back</h2>
+        <p class="login-subtitle">Sign in to access the scheduling dashboard</p>
+
+        <div class="login-error" id="loginError">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span id="loginErrorMsg">Invalid credentials. Please try again.</span>
+        </div>
+
+        <form id="loginForm" onsubmit="return false;">
+          <div class="login-field">
+            <label for="loginEmail">Email Address</label>
+            <div class="field-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <input type="email" id="loginEmail" placeholder="you@sti.edu" value="admin@sti.edu" autocomplete="email" />
+            </div>
+          </div>
+
+          <div class="login-field">
+            <label for="loginPassword">Password</label>
+            <div class="field-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input type="password" id="loginPassword" placeholder="Enter your password" value="password" autocomplete="current-password" />
+            </div>
+          </div>
+
+          <div class="login-extras">
+            <label class="login-remember">
+              <input type="checkbox" checked /> Remember me
+            </label>
+            <a class="login-forgot">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn-login" id="btnLogin">
+            <span class="spinner"></span>
+            <span class="btn-text">Sign In</span>
+          </button>
+        </form>
+      </div>
+
+      <div class="login-footer">
+        Secured with role-based access control<br/>
+        <a href="#">IT Support</a> · <a href="#">System Status</a> · v2.1.0
+      </div>
+    </div>
+  </div>
+
+  <div class="app" id="appShell">
+    <!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="logo">STI</div>
+        <div>
+          <h1>Schedule AI</h1>
+          <span>STI College Marikina</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-label">Scheduling</div>
+
+          <div class="nav-item active" data-module="schedule">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Master Schedule
+            <span class="nav-badge">3</span>
+          </div>
+
+          <div class="nav-item" data-module="minimap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Campus Map
+          </div>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-label">Resources</div>
+
+          <div class="nav-item" data-module="rooms">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Room Information
+          </div>
+
+          <div class="nav-item" data-module="faculty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Faculty Profiles
+          </div>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-label">Administration</div>
+
+          <div class="nav-item" data-module="users">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            User Management
+          </div>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer" style="position:relative;">
+        <div class="avatar">SA</div>
+        <div class="user-info">
+          <div class="user-name">System Administrator</div>
+          <div class="user-role">System Admin</div>
+        </div>
+        <button class="btn-icon" id="userMenuBtn" onclick="toggleUserMenu(event)" style="border:none; background:none; color:var(--text-secondary); cursor:pointer;" title="Account Options">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+        <!-- User Dropdown Menu -->
+        <div id="userDropdownMenu" style="display:none; position:absolute; bottom:64px; right:12px; background:white; border:1px solid var(--border-subtle); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.15); z-index:1000; min-width:150px; padding:6px 0;">
+          <div onclick="logoutUser()" style="padding:9px 14px; font-size:13px; color:var(--danger); display:flex; align-items:center; gap:8px; cursor:pointer;" onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='transparent'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Logout
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ═══════════════════════ MAIN ═══════════════════════ -->
+    <div class="main">
+
+      <!-- ─── HEADER ─── -->
+      <header class="header">
+        <div class="header-title">
+          <h2 id="headerTitle">Interactive Schedule Management Dashboard</h2>
+          <p id="headerSubtitle">1st Semester AY 2026–2027 · 342 sections across 19 rooms</p>
+        </div>
+        <div class="header-actions">
+          <div class="ai-status active" id="aiStatus">
+            <span class="ai-dot"></span>
+            AI Engine Active
+          </div>
+          <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="search" placeholder="Search sections..." />
+          </div>
+        </div>
+      </header>
+
+      <!-- ─── CONTENT ─── -->
+      <div class="content">
+
+        <!-- ══════════════════════════════════════════════
+             MODULE 1: INTERACTIVE SCHEDULE MANAGEMENT
+             ══════════════════════════════════════════════ -->
+        <div class="module-page active" id="page-schedule">
+          <!-- Stats Row -->
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-icon blue">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <div>
+                <div class="stat-value">342</div>
+                <div class="stat-label">Total Sections</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div>
+                <div class="stat-value">318</div>
+                <div class="stat-label">Successfully Assigned</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon orange">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </div>
+              <div>
+                <div class="stat-value">21</div>
+                <div class="stat-label">Pending Overrides</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon red">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              </div>
+              <div>
+                <div class="stat-value">3</div>
+                <div class="stat-label">Active Conflicts</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grid Controls -->
+          <div class="grid-controls">
+            <div class="filter-group">
+              <label>Program:</label>
+              <select id="programFilter">
+                <option value="all">All Programs</option>
+                <option value="BSIT">BSIT</option>
+                <option value="BSCS">BSCS</option>
+                <option value="BSCpE">BSCpE</option>
+                <option value="BSHM">BSHM</option>
+                <option value="BSTM">BSTM</option>
+                <option value="BSBA">BSBA</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Year:</label>
+              <select id="yearFilter">
+                <option value="all">All Years</option>
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <button class="btn btn-outline" id="btnExport" style="font-size:12px; padding:6px 14px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export Timetable
+              </button>
+              <button class="btn btn-primary" id="btnGenerate" style="font-size:12px; padding:6px 14px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                Generate Baseline
+              </button>
+            </div>
+            <div style="margin-left:auto;">
+              <div class="legend-row">
+                <div class="legend-item"><div class="legend-dot" style="background:#EEF1F7; border: 1px solid var(--accent-primary);"></div> AI Generated</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--warning-bg); border: 1px solid var(--warning);"></div> Manual Override</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--danger-bg); border: 1px solid var(--danger);"></div> Conflict</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Master Grid -->
+          <div class="card" style="overflow-x:auto;">
+            <table class="schedule-grid" id="masterGrid">
+              <thead>
+                <tr>
+                  <th style="min-width:100px;">Room</th>
+                  <th>7:00 – 8:30</th>
+                  <th>8:30 – 10:00</th>
+                  <th>10:00 – 11:30</th>
+                  <th>11:30 – 1:00</th>
+                  <th>1:00 – 2:30</th>
+                  <th>2:30 – 4:00</th>
+                  <th>4:00 – 5:30</th>
+                  <th>5:30 – 7:00</th>
+                </tr>
+              </thead>
+              <tbody id="gridBody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════
+             MODULE 2: CAMPUS MINI MAP
+             ══════════════════════════════════════════════ -->
+        <div class="module-page" id="page-minimap">
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-icon green">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <div>
+                <div class="stat-value">11</div>
+                <div class="stat-label">Available Now</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon red">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+              </div>
+              <div>
+                <div class="stat-value">6</div>
+                <div class="stat-label">Occupied</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon orange">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div>
+                <div class="stat-value">2</div>
+                <div class="stat-label">Ending in ≤15 min</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon blue">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+              </div>
+              <div>
+                <div class="stat-value">78%</div>
+                <div class="stat-label">Overall Utilization</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="minimap-layout">
+            <div class="floor-map">
+              <div class="floor-tabs">
+                <div class="floor-tab active" data-floor="1">1st Floor</div>
+                <div class="floor-tab" data-floor="2">2nd Floor</div>
+                <div class="floor-tab" data-floor="3">3rd Floor</div>
+              </div>
+              <div class="floor-canvas" id="floorCanvas">
+                <!-- Populated by JS -->
+              </div>
+              <div style="padding: 12px 20px; border-top: 1px solid var(--border-subtle);">
+                <div class="legend-row">
+                  <div class="legend-item"><div class="legend-dot" style="background:var(--success-bg); border:1px solid var(--success);"></div> Available</div>
+                  <div class="legend-item"><div class="legend-dot" style="background:var(--danger-bg); border:1px solid #E8A9A3;"></div> Occupied</div>
+                  <div class="legend-item"><div class="legend-dot" style="background:var(--warning-bg); border:1px solid #E0C07A;"></div> Ending Soon</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="utilization-panel">
+              <div class="util-card">
+                <h4>Utilization by Floor</h4>
+                <div class="util-bar-row">
+                  <span class="util-bar-label">1F</span>
+                  <div class="util-bar-track"><div class="util-bar-fill" style="width:78%; background:var(--accent-primary);"></div></div>
+                  <span class="util-bar-value" style="color:var(--accent-primary);">78%</span>
+                </div>
+                <div class="util-bar-row">
+                  <span class="util-bar-label">2F</span>
+                  <div class="util-bar-track"><div class="util-bar-fill" style="width:85%; background:var(--accent-primary);"></div></div>
+                  <span class="util-bar-value" style="color:var(--accent-primary);">85%</span>
+                </div>
+                <div class="util-bar-row">
+                  <span class="util-bar-label">3F</span>
+                  <div class="util-bar-track"><div class="util-bar-fill" style="width:72%; background:var(--success);"></div></div>
+                  <span class="util-bar-value" style="color:var(--success);">72%</span>
+                </div>
+              </div>
+
+              <div class="util-card">
+                <h4>Peak Hours Today</h4>
+                <div style="display:flex; gap:4px; align-items:flex-end; height:100px; padding-top:10px;">
+                  <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+                    <div style="flex:1; width:100%; background:#EEF1F7; border-radius:4px 4px 0 0; min-height:20%; max-height:30%;"></div>
+                    <span style="font-size:9px; color:var(--text-secondary);">7a</span>
+                  </div>
+                  <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+                    <div style="flex:1; width:100%; background:#EEF1F7; border-radius:4px 4px 0 0; min-height:60%; max-height:65%;"></div>
+                    <span style="font-size:9px; color:var(--text-secondary);">8a</span>
+                  </div>
+                  <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+                    <div style="flex:1; width:100%; background:var(--accent-primary); border-radius:4px 4px 0 0; min-height:95%;"></div>
+                    <span style="font-size:9px; color:var(--text-secondary);">9a</span>
+                  </div>
+                  <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+                    <div style="flex:1; width:100%; background:var(--accent-primary); border-radius:4px 4px 0 0; min-height:90%;"></div>
+                    <span style="font-size:9px; color:var(--text-secondary);">10a</span>
+                  </div>
+                  <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+                    <div style="flex:1; width:100%; background:#EEF1F7; border-radius:4px 4px 0 0; min-height:40%;"></div>
+                    <span style="font-size:9px; color:var(--text-secondary);">11a</span>
+                  </div>
+                  <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+                    <div style="flex:1; width:100%; background:#EEF1F7; border-radius:4px 4px 0 0; min-height:50%;"></div>
+                    <span style="font-size:9px; color:var(--text-secondary);">12p</span>
+                  </div>
+                  <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+                    <div style="flex:1; width:100%; background:var(--accent-primary); border-radius:4px 4px 0 0; min-height:88%;"></div>
+                    <span style="font-size:9px; color:var(--text-secondary);">1p</span>
+                  </div>
+                  <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+                    <div style="flex:1; width:100%; background:#EEF1F7; border-radius:4px 4px 0 0; min-height:72%;"></div>
+                    <span style="font-size:9px; color:var(--text-secondary);">2p</span>
+                  </div>
+                  <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+                    <div style="flex:1; width:100%; background:#EEF1F7; border-radius:4px 4px 0 0; min-height:55%;"></div>
+                    <span style="font-size:9px; color:var(--text-secondary);">3p</span>
+                  </div>
+                  <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+                    <div style="flex:1; width:100%; background:#EEF1F7; border-radius:4px 4px 0 0; min-height:35%;"></div>
+                    <span style="font-size:9px; color:var(--text-secondary);">4p</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="util-card">
+                <h4>Room Type Breakdown</h4>
+                <div style="display:flex; gap:12px; margin-top:6px;">
+                  <div style="flex:1; text-align:center; padding:12px; background:var(--bg-primary); border-radius:var(--radius-sm);">
+                    <div style="font-size:22px; font-weight:800; color:var(--accent-primary);">15</div>
+                    <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">Lecture Rooms</div>
+                  </div>
+                  <div style="flex:1; text-align:center; padding:12px; background:var(--bg-primary); border-radius:var(--radius-sm);">
+                    <div style="font-size:22px; font-weight:800; color:#6C3483;">4</div>
+                    <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">Computer Labs</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════
+             MODULE 3: ROOM & FACILITY INVENTORY
+             ══════════════════════════════════════════════ -->
+        <div class="module-page" id="page-rooms">
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+              <div><div class="stat-value">19</div><div class="stat-label">Total Rooms</div></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+              <div><div class="stat-value">15</div><div class="stat-label">Lecture Rooms</div></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon orange"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+              <div><div class="stat-value">4</div><div class="stat-label">Computer Labs</div></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+              <div><div class="stat-value">835</div><div class="stat-label">Total Capacity</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3>Room Information</h3>
+                <p>Manage 15 lecture rooms and 4 computer labs across Floors 1, 2, and 3</p>
+              </div>
+              <button class="btn btn-primary" onclick="openAddRoomModal()" style="font-size:12px; padding:7px 16px;">+ Add Room</button>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <div class="data-table-wrapper">
+                <table class="data-table" id="roomTable">
+                  <thead>
+                    <tr>
+                      <th>Room Code</th>
+                      <th>Floor</th>
+                      <th>Type</th>
+                      <th>Capacity</th>
+                      <th>Utilization</th>
+                      <th style="width:140px; text-align:right;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="roomTableBody">
+                    <!-- Populated by JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════
+             MODULE 4: FACULTY & RESOURCE PROFILING
+             ══════════════════════════════════════════════ -->
+        <div class="module-page" id="page-faculty">
+          <div class="grid-controls" style="margin-bottom:20px;">
+            <div class="filter-group">
+              <label>Department:</label>
+              <select id="facultyDeptFilter">
+                <option value="all">All Departments</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Status:</label>
+              <select id="facultyStatusFilter">
+                <option value="all">All Statuses</option>
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+              </select>
+            </div>
+            <div style="margin-left:auto; display:flex; gap:10px;">
+              <button class="btn btn-outline" id="btnManageDepts" onclick="openDeptModal()" style="font-size:12px; padding:7px 14px;">Manage Departments</button>
+              <button class="btn btn-primary" id="btnAddFaculty" onclick="openAddFacultyModal()" style="font-size:12px; padding:7px 16px;">+ Add Faculty</button>
+            </div>
+          </div>
+
+          <div class="faculty-grid" id="facultyGrid">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════
+             MODULE 6: USER MANAGEMENT & SECURITY
+             ══════════════════════════════════════════════ -->
+        <div class="module-page" id="page-users">
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+              <div><div class="stat-value" id="activeUsersCount">3</div><div class="stat-label">Active Accounts</div></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+              <div><div class="stat-value">3</div><div class="stat-label">Roles Defined</div></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon orange"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+              <div><div class="stat-value" id="onlineUsersCount">3</div><div class="stat-label">Online Now</div></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+              <div><div class="stat-value">48</div><div class="stat-label">Audit Log Entries</div></div>
+            </div>
+          </div>
+
+          <!-- Users Table -->
+          <div class="card" style="margin-bottom:20px;">
+            <div class="card-header">
+              <div><h3>System Users & Faculty Accounts</h3><p>Admin-controlled account provisioning and access management for professors and staff</p></div>
+              <button class="btn btn-primary" id="btnAddAccount" onclick="openAddUserModal()" style="font-size:12px; padding:7px 16px;">+ Add Account</button>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <div class="data-table-wrapper">
+                <table class="data-table" id="userTable">
+                  <thead>
+                    <tr><th>User</th><th>Email</th><th>Role</th><th>Last Active</th><th>Status</th><th style="width:100px; text-align:right;">Actions</th></tr>
+                  </thead>
+                  <tbody id="userTableBody">
+                    <!-- Populated dynamically by JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Access Control Matrix -->
+          <div class="card">
+            <div class="card-header">
+              <div><h3>Role-Based Access Matrix</h3><p>Permission controls per system module</p></div>
+            </div>
+            <div class="card-body" style="padding:0 22px 22px;">
+              <table class="access-matrix">
+                <thead>
+                  <tr>
+                    <th style="width:40%;">Module</th>
+                    <th>Admin</th>
+                    <th>Academic Head</th>
+                    <th>Program Head / Faculty</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Master Schedule (Full Edit)</td>
+                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-deny">—</span></td>
+                  </tr>
+                  <tr>
+                    <td>Master Schedule (Own Program)</td>
+                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-check">✓</span></td>
+                  </tr>
+                  <tr>
+                    <td>AI Engine Configuration</td>
+                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-deny">—</span></td>
+                  </tr>
+                  <tr>
+                    <td>Room & Facility Management</td>
+                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-deny">—</span></td>
+                  </tr>
+                  <tr>
+                    <td>Faculty Profiles & MAQ</td>
+                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-check">✓</span></td>
+                  </tr>
+                  <tr>
+                    <td>Campus Map & Utilization</td>
+                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-check">✓</span></td>
+                  </tr>
+                  <tr>
+                    <td>User Management</td>
+                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-deny">—</span></td>
+                    <td><span class="access-deny">—</span></td>
+                  </tr>
+                  <tr>
+                    <td>Audit Logs</td>
+                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-deny">—</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /content -->
+    </div><!-- /main -->
+  </div><!-- /app -->
+
+  <!-- ═══ CONFLICT ALERT TOAST ═══ -->
+  <div class="conflict-toast" id="conflictToast">
+    <div class="toast-icon">⚠</div>
+    <div>
+      <div class="toast-title" id="toastTitle">Scheduling Conflict Detected</div>
+      <div class="toast-msg" id="toastMsg">Room LR-201 double-booked at 10:00–11:30 — Academic Head (ITE 101) conflicts with Program Head (CC 103).</div>
+      <div class="toast-actions">
+        <button class="toast-btn toast-btn-resolve" onclick="resolveConflict()">AI Auto-Resolve</button>
+        <button class="toast-btn toast-btn-dismiss" onclick="hideConflictToast()">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DEPARTMENT MANAGEMENT MODAL ═══ -->
+  <div class="modal-overlay" id="deptModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.45); backdrop-filter:blur(3px); z-index:1000; align-items:center; justify-content:center;">
+    <div class="modal" style="background:#fff; border-radius:12px; width:100%; max-width:480px; box-shadow:0 20px 40px rgba(0,0,0,0.2); overflow:hidden;">
+      <div style="padding:18px 24px; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; background:#F8FAFD;">
+        <h3 style="margin:0; font-size:16px; font-weight:700; color:var(--accent-primary);">Manage Departments</h3>
+        <button class="btn btn-outline" style="padding:4px 10px; font-size:12px;" onclick="closeDeptModal()">✕</button>
+      </div>
+      <div style="padding:20px 24px;">
+        <p style="font-size:12.5px; color:var(--text-secondary); margin-bottom:16px;">Add, rename, or remove academic departments. Removing a department will safely reassign affected faculty.</p>
+        
+        <div style="display:flex; gap:8px; margin-bottom:20px;">
+          <input type="text" id="newDeptInput" class="form-input" placeholder="New Department Name (e.g. Multimedia Arts)" style="flex:1;" />
+          <button class="btn btn-primary" onclick="addDepartment()" style="white-space:nowrap;">+ Add</button>
+        </div>
+
+        <div style="font-size:12px; font-weight:700; color:var(--text-secondary); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Existing Departments</div>
+        <div id="deptListContainer" style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; padding-right:4px;">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+      <div style="padding:14px 24px; border-top:1px solid var(--border-subtle); display:flex; justify-content:flex-end; background:#F8FAFD;">
+        <button class="btn btn-outline" onclick="closeDeptModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ADD FACULTY MODAL ═══ -->
+  <div class="modal-overlay" id="addFacultyModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.45); backdrop-filter:blur(3px); z-index:1000; align-items:center; justify-content:center;">
+    <div class="modal" style="background:#fff; border-radius:12px; width:100%; max-width:460px; box-shadow:0 20px 40px rgba(0,0,0,0.2); overflow:hidden;">
+      <div style="padding:18px 24px; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; background:#F8FAFD;">
+        <h3 style="margin:0; font-size:16px; font-weight:700; color:var(--accent-primary);">Add Faculty Member</h3>
+        <button class="btn btn-outline" style="padding:4px 10px; font-size:12px;" onclick="closeAddFacultyModal()">✕</button>
+      </div>
+      <div style="padding:20px 24px;">
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label">Select Registered User Account (Faculty / Professors)</label>
+          <select id="newFacUserSelect" class="form-input" onchange="handleFacultyUserDropdownChange(this.value)">
+            <!-- Populated dynamically from User Management -->
+          </select>
+          <span style="font-size:11px; color:var(--text-secondary); margin-top:4px; display:block;">Only accounts registered in User Management as faculty or academic staff can be assigned teaching profiles.</span>
+        </div>
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label">Academic Department</label>
+          <select id="newFacDept" class="form-input"></select>
+        </div>
+        <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Employment Status</label>
+            <select id="newFacStatus" class="form-input">
+              <option value="Full-time">Full-time</option>
+              <option value="Part-time">Part-time</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Max Load (hrs/wk)</label>
+            <input type="number" id="newFacMaxLoad" class="form-input" value="24" min="6" max="30" />
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Qualified Subjects / MAQ (comma-separated)</label>
+          <input type="text" id="newFacQuals" class="form-input" placeholder="e.g. ITE 101, CC 103" />
+        </div>
+      </div>
+      <div style="padding:14px 24px; border-top:1px solid var(--border-subtle); display:flex; justify-content:flex-end; gap:8px; background:#F8FAFD;">
+        <button class="btn btn-outline" onclick="closeAddFacultyModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitAddFaculty()">Save Faculty</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ROOM ADD / EDIT MODAL ═══ -->
+  <div class="modal-overlay" id="roomModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.45); backdrop-filter:blur(3px); z-index:1000; align-items:center; justify-content:center;">
+    <div class="modal" style="background:#fff; border-radius:12px; width:100%; max-width:440px; box-shadow:0 20px 40px rgba(0,0,0,0.2); overflow:hidden;">
+      <div style="padding:18px 24px; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; background:#F8FAFD;">
+        <h3 id="roomModalTitle" style="margin:0; font-size:16px; font-weight:700; color:var(--accent-primary);">Add Room</h3>
+        <button class="btn btn-outline" style="padding:4px 10px; font-size:12px;" onclick="closeRoomModal()">✕</button>
+      </div>
+      <div style="padding:20px 24px;">
+        <input type="hidden" id="roomEditOriginalCode" value="" />
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label">Room Code / Number</label>
+          <input type="text" id="roomCodeInput" class="form-input" placeholder="e.g. LR-106 or CL-105" />
+        </div>
+        <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Floor</label>
+            <select id="roomFloorInput" class="form-input">
+              <option value="1F">1st Floor</option>
+              <option value="2F">2nd Floor</option>
+              <option value="3F">3rd Floor</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Room Type</label>
+            <select id="roomTypeInput" class="form-input">
+              <option value="Lecture">Lecture Room</option>
+              <option value="CompLab">Computer Lab</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Seating Capacity</label>
+          <input type="number" id="roomCapInput" class="form-input" value="45" min="10" max="100" />
+        </div>
+      </div>
+      <div style="padding:14px 24px; border-top:1px solid var(--border-subtle); display:flex; justify-content:flex-end; gap:8px; background:#F8FAFD;">
+        <button class="btn btn-outline" onclick="closeRoomModal()">Cancel</button>
+        <button class="btn btn-primary" id="roomModalSubmitBtn" onclick="submitRoomForm()">Save Room</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ROOM SCHEDULE MODAL (CAMPUS MAP INTERACTION) ═══ -->
+  <div class="modal-overlay" id="roomScheduleModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.45); backdrop-filter:blur(3px); z-index:1000; align-items:center; justify-content:center;">
+    <div class="modal" style="background:#fff; border-radius:12px; width:100%; max-width:640px; box-shadow:0 20px 40px rgba(0,0,0,0.2); overflow:hidden;">
+      <div style="padding:18px 24px; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; background:#F8FAFD;">
+        <div>
+          <h3 id="schedModalRoomCode" style="margin:0; font-size:16px; font-weight:700; color:var(--accent-primary);">Room Schedule</h3>
+          <p id="schedModalRoomMeta" style="margin:2px 0 0; font-size:12px; color:var(--text-secondary);">Floor & Utilization</p>
+        </div>
+        <button class="btn btn-outline" style="padding:4px 10px; font-size:12px;" onclick="closeRoomScheduleModal()">✕</button>
+      </div>
+      <div style="padding:16px 24px; max-height:420px; overflow-y:auto;">
+        <table class="data-table" style="width:100%;">
+          <thead>
+            <tr>
+              <th style="width:25%;">Time Slot</th>
+              <th style="width:30%;">Subject</th>
+              <th style="width:25%;">Faculty</th>
+              <th style="width:20%;">Section</th>
+            </tr>
+          </thead>
+          <tbody id="schedModalTableBody">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:12px 24px; border-top:1px solid var(--border-subtle); display:flex; justify-content:flex-end; background:#F8FAFD;">
+        <button class="btn btn-outline" onclick="closeRoomScheduleModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ADD USER ACCOUNT MODAL ═══ -->
+  <div class="modal-overlay" id="addUserModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.45); backdrop-filter:blur(3px); z-index:1000; align-items:center; justify-content:center;">
+    <div class="modal" style="background:#fff; border-radius:12px; width:100%; max-width:460px; box-shadow:0 20px 40px rgba(0,0,0,0.2); overflow:hidden;">
+      <div style="padding:18px 24px; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; background:#F8FAFD;">
+        <h3 style="margin:0; font-size:16px; font-weight:700; color:var(--accent-primary);">Create User / Faculty Account</h3>
+        <button class="btn btn-outline" style="padding:4px 10px; font-size:12px;" onclick="closeAddUserModal()">✕</button>
+      </div>
+      <div style="padding:20px 24px;">
+        <div id="addUserError" style="display:none; color:var(--danger); font-size:12px; margin-bottom:14px; padding:9px 14px; background:#FFF5F5; border-radius:6px; border:1px solid #FADBD8;"></div>
+        <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">Only administrators have permission to provision accounts for professors and academic staff.</p>
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="newUserName" class="form-input" placeholder="e.g. Prof. Maria Santos" />
+        </div>
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label">Institutional Email</label>
+          <input type="email" id="newUserEmail" class="form-input" placeholder="e.g. maria.santos@sti.edu" />
+        </div>
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label">Account Password <span style="font-size:11px; color:var(--text-secondary); font-weight:normal;">(default: password)</span></label>
+          <input type="password" id="newUserPassword" class="form-input" placeholder="Enter password or leave blank for default 'password'" />
+        </div>
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label">Account Role</label>
+          <select id="newUserRole" class="form-input">
+            <option value="faculty" selected>Faculty / Professor</option>
+            <option value="program-head">Program Head</option>
+            <option value="academic-head">Academic Head</option>
+            <option value="admin">System Administrator</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Academic Department</label>
+          <select id="newUserDept" class="form-input"></select>
+        </div>
+      </div>
+      <div style="padding:14px 24px; border-top:1px solid var(--border-subtle); display:flex; justify-content:flex-end; gap:8px; background:#F8FAFD;">
+        <button class="btn btn-outline" onclick="closeAddUserModal()">Cancel</button>
+        <button class="btn btn-primary" id="btnSubmitAddUser" onclick="submitAddUser()">Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ REMOVE USER CONFIRMATION MODAL ═══ -->
+  <div class="modal-overlay" id="deleteUserModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.45); backdrop-filter:blur(3px); z-index:1000; align-items:center; justify-content:center;">
+    <div class="modal" style="background:#fff; border-radius:12px; width:100%; max-width:440px; box-shadow:0 20px 40px rgba(0,0,0,0.2); overflow:hidden;">
+      <div style="padding:18px 24px; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; background:#FFF5F5;">
+        <h3 style="margin:0; font-size:16px; font-weight:700; color:var(--danger);">Remove User Account</h3>
+        <button class="btn btn-outline" style="padding:4px 10px; font-size:12px;" onclick="closeDeleteUserModal()">✕</button>
+      </div>
+      <div style="padding:20px 24px;">
+        <input type="hidden" id="deleteUserTargetEmail" value="" />
+        <p style="font-size:13px; color:var(--text-primary); margin-bottom:12px;">Are you sure you want to remove the following account?</p>
+        <div style="background:#F8FAFD; border:1px solid var(--border-subtle); border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+          <div id="deleteUserNameDisplay" style="font-weight:700; font-size:14px; color:var(--text-primary);"></div>
+          <div id="deleteUserEmailDisplay" style="font-size:12px; color:var(--text-secondary); margin-top:2px;"></div>
+        </div>
+        <p style="font-size:12px; color:var(--text-secondary); margin:0;">This user will no longer be able to log in or manage faculty schedules.</p>
+      </div>
+      <div style="padding:14px 24px; border-top:1px solid var(--border-subtle); display:flex; justify-content:flex-end; gap:8px; background:#F8FAFD;">
+        <button class="btn btn-outline" onclick="closeDeleteUserModal()">Cancel</button>
+        <button class="btn btn-danger" id="confirmDeleteUserBtn" onclick="confirmDeleteUser()" style="background:var(--danger); color:#fff; border:none; padding:7px 16px; border-radius:6px; cursor:pointer;">Confirm Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MASTER SCHEDULE CONTEXT MENU (RIGHT-CLICK) ═══ -->
+  <div id="scheduleContextMenu" style="display:none; position:fixed; z-index:2500; background:#fff; border-radius:10px; border:1px solid var(--border-subtle); box-shadow:0 12px 32px rgba(15,23,42,0.18); min-width:220px; overflow:hidden; font-size:13px;">
+    <div id="ctxMenuHeader" style="padding:10px 14px; background:#F8FAFD; border-bottom:1px solid var(--border-subtle);">
+      <div id="ctxMenuRoomSlot" style="font-weight:700; color:var(--text-primary); font-size:12px;"></div>
+      <div id="ctxMenuDetails" style="font-size:11px; color:var(--text-secondary); margin-top:2px;"></div>
+    </div>
+    <div style="padding:6px 0;">
+      <div id="ctxBtnAdd" onclick="triggerCtxAdd()" style="display:none; padding:9px 14px; cursor:pointer; color:var(--accent-primary); font-weight:600; align-items:center; gap:8px;" onmouseover="this.style.background='#EEF2FF'" onmouseout="this.style.background='transparent'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>+ Add Professor to Slot</span>
+      </div>
+      <div id="ctxBtnEdit" onclick="triggerCtxEdit()" style="display:none; padding:9px 14px; cursor:pointer; color:var(--accent-primary); font-weight:600; align-items:center; gap:8px;" onmouseover="this.style.background='#EEF2FF'" onmouseout="this.style.background='transparent'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <span>Change Professor</span>
+      </div>
+      <div id="ctxBtnRemove" onclick="triggerCtxRemove()" style="display:none; padding:9px 14px; cursor:pointer; color:var(--danger); font-weight:600; align-items:center; gap:8px;" onmouseover="this.style.background='#FFF1F2'" onmouseout="this.style.background='transparent'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <span>Remove Professor (Clear Slot)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLOT ASSIGNMENT / CHANGE PROFESSOR MODAL ═══ -->
+  <div class="modal-overlay" id="slotModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.45); backdrop-filter:blur(3px); z-index:1000; align-items:center; justify-content:center;">
+    <div class="modal" style="background:#fff; border-radius:12px; width:100%; max-width:450px; box-shadow:0 20px 40px rgba(0,0,0,0.2); overflow:hidden;">
+      <div style="padding:18px 24px; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; background:#F8FAFD;">
+        <h3 id="slotModalTitle" style="margin:0; font-size:16px; font-weight:700; color:var(--accent-primary);">Assign Professor to Slot</h3>
+        <button class="btn btn-outline" style="padding:4px 10px; font-size:12px;" onclick="closeSlotModal()">✕</button>
+      </div>
+      <div style="padding:20px 24px;">
+        <div id="slotModalError" style="display:none; color:var(--danger); font-size:12px; margin-bottom:14px; padding:9px 14px; background:#FFF5F5; border-radius:6px; border:1px solid #FADBD8;"></div>
+        
+        <input type="hidden" id="slotTargetRoom" value="" />
+        <input type="hidden" id="slotTargetIdx" value="" />
+
+        <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Classroom</label>
+            <input type="text" id="slotRoomDisplay" class="form-input" disabled style="background:#F1F5F9; font-weight:700;" />
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Time Frame</label>
+            <input type="text" id="slotTimeDisplay" class="form-input" disabled style="background:#F1F5F9; font-weight:700;" />
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label">Professor / Instructor</label>
+          <select id="slotFacultySelect" class="form-input" onchange="handleSlotFacultyChange(this.value)">
+            <!-- Populated dynamically with registered faculty -->
+          </select>
+          <span style="font-size:11px; color:var(--text-secondary); margin-top:4px; display:block;">Only professors registered in User Management & Faculty Profiles are schedulable.</span>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label">Course / Subject Code</label>
+          <input type="text" id="slotSubjectInput" class="form-input" placeholder="e.g. ITE 101, CC 103" />
+        </div>
+
+        <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:0;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Academic Program</label>
+            <select id="slotProgramSelect" class="form-input">
+              <option value="BSIT">BSIT</option>
+              <option value="BSCS">BSCS</option>
+              <option value="BSCpE">BSCpE</option>
+              <option value="BSHM">BSHM</option>
+              <option value="BSTM">BSTM</option>
+              <option value="BSBA">BSBA</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Section Name</label>
+            <input type="text" id="slotSectionInput" class="form-input" placeholder="e.g. BSIT 1A" />
+          </div>
+        </div>
+      </div>
+      <div style="padding:14px 24px; border-top:1px solid var(--border-subtle); display:flex; justify-content:flex-end; gap:8px; background:#F8FAFD;">
+        <button class="btn btn-outline" onclick="closeSlotModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitSlotAssignment()">Save Schedule</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ═══════════════════════════════════════════════════
+       LOGIN — Authentication flow
+       ═══════════════════════════════════════════════════ */
+
+    const VALID_USERS = {
+      'admin@sti.edu': { name: 'System Administrator', role: 'admin',         initials: 'SA', password: 'password' },
+      'acah@sti.edu':  { name: 'Academic Head',        role: 'academic-head', initials: 'AH', password: 'password' },
+      'proh@sti.edu':  { name: 'Program Head',         role: 'program-head',  initials: 'PH', password: 'password' },
+    };
+
+    let CURRENT_USER = {
+      name: 'System Administrator',
+      email: 'admin@sti.edu',
+      role: 'admin',
+      initials: 'SA'
+    };
+
+    document.getElementById('btnLogin').addEventListener('click', handleLogin);
+    document.getElementById('loginForm').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleLogin();
+    });
+
+    function completeLoginTransition(user, normalizedEmail) {
+      CURRENT_USER = {
+        name: user.name,
+        email: normalizedEmail,
+        role: user.role,
+        initials: user.initials || (user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'ST')
+      };
+
+      document.querySelector('.sidebar-footer .user-name').textContent = user.name;
+      document.querySelector('.sidebar-footer .avatar').textContent = CURRENT_USER.initials;
+
+      const ROLE_LABELS = {
+        'admin': 'System Administrator',
+        'academic-head': 'Academic Head',
+        'program-head': 'Program Head',
+        'faculty': 'Faculty Member'
+      };
+      document.querySelector('.sidebar-footer .user-role').textContent = ROLE_LABELS[user.role] || 'User';
+
+      // Refresh user management table with role-specific actions
+      renderUserTable();
+
+      // Transition: fade out login, reveal dashboard
+      const loginPage = document.getElementById('loginPage');
+      const appShell = document.getElementById('appShell');
+
+      loginPage.classList.add('hidden');
+      appShell.style.display = 'flex';
+
+      setTimeout(() => {
+        loginPage.style.display = 'none';
+      }, 500);
+
+      // Trigger demo conflict toast after entering dashboard
+      setTimeout(() => {
+        const toast = document.getElementById('conflictToast');
+        if (toast) toast.classList.add('show');
+      }, 3500);
+    }
+
+    async function syncUsersFromDB() {
+      try {
+        const res = await fetch('/api/users.php');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+            data.data.forEach(u => {
+              const email = u.email.toLowerCase();
+              const fullName = `${u.first_name} ${u.last_name}`.trim();
+              const roleLabels = {
+                'admin': 'System Admin',
+                'faculty': `Faculty – ${u.subject_role || 'General'}`,
+                'program-head': `Program Head – ${u.subject_role || 'General'}`,
+                'academic-head': 'Academic Head'
+              };
+              const existingIdx = USERS.findIndex(existing => existing.email.toLowerCase() === email);
+              if (existingIdx === -1) {
+                USERS.push({
+                  name: fullName,
+                  email: email,
+                  role: u.role,
+                  roleLabel: roleLabels[u.role] || u.role,
+                  lastActive: 'Active',
+                  status: 'Online'
+                });
+              } else {
+                USERS[existingIdx].role = u.role;
+                USERS[existingIdx].roleLabel = roleLabels[u.role] || u.role;
+              }
+
+              const initials = fullName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'ST';
+              if (!VALID_USERS[email]) {
+                VALID_USERS[email] = {
+                  name: fullName,
+                  role: u.role,
+                  initials: initials,
+                  password: 'password'
+                };
+              }
+
+              if (['faculty', 'program-head', 'academic-head'].includes(u.role)) {
+                if (!FACULTY.some(f => f.email.toLowerCase() === email)) {
+                  const colors = ['#25447A', '#2E7D5B', '#6C3483', '#C27A1A', '#2980B9', '#C0392B'];
+                  FACULTY.push({
+                    name: fullName,
+                    email: email,
+                    dept: u.subject_role || 'IT / CS',
+                    status: 'Full-time',
+                    load: 18,
+                    maxLoad: 24,
+                    quals: [u.subject_role || 'General'],
+                    bg: colors[Math.floor(Math.random() * colors.length)]
+                  });
+                }
+              }
+            });
+            renderUserTable();
+            renderFacultyCards();
+          }
+        }
+      } catch (err) {
+        console.log('Database user sync skipped (standalone or offline):', err);
+      }
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      const btn = document.getElementById('btnLogin');
+      const errorEl = document.getElementById('loginError');
+
+      // Hide previous errors
+      errorEl.classList.remove('show');
+
+      // Basic validation
+      if (!email || !password) {
+        document.getElementById('loginErrorMsg').textContent = 'Please enter both email and password.';
+        errorEl.classList.add('show');
+        return;
+      }
+
+      // Show loading state
+      btn.classList.add('loading');
+      const normalizedEmail = email.toLowerCase();
+
+      // 1. Try real database authentication via API
+      try {
+        const res = await fetch('/api/auth.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: normalizedEmail, password })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.user) {
+            btn.classList.remove('loading');
+            completeLoginTransition(data.user, normalizedEmail);
+            syncUsersFromDB();
+            return;
+          } else {
+            btn.classList.remove('loading');
+            document.getElementById('loginErrorMsg').textContent = data.message || 'Incorrect password entered.';
+            errorEl.classList.add('show');
+            return;
+          }
+        }
+      } catch (apiErr) {
+        console.log('Backend auth unreachable, falling back to local credentials:', apiErr);
+      }
+
+      // 2. Fallback to local accounts (for standalone file:// mode or offline)
+      setTimeout(() => {
+        btn.classList.remove('loading');
+
+        // Accept any @sti.edu email
+        if (!normalizedEmail.endsWith('@sti.edu')) {
+          document.getElementById('loginErrorMsg').textContent = 'Access restricted to @sti.edu accounts only.';
+          errorEl.classList.add('show');
+          return;
+        }
+
+        // Verify account exists
+        const user = VALID_USERS[normalizedEmail];
+        if (!user) {
+          document.getElementById('loginErrorMsg').textContent = 'Account not found. Please contact an administrator.';
+          errorEl.classList.add('show');
+          return;
+        }
+
+        // Verify password (default 'password' if not set)
+        const expectedPassword = user.password || 'password';
+        if (password !== expectedPassword) {
+          document.getElementById('loginErrorMsg').textContent = 'Incorrect password entered.';
+          errorEl.classList.add('show');
+          return;
+        }
+
+        completeLoginTransition(user, normalizedEmail);
+      }, 400);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       DATA — Mock datasets for all modules
+       ═══════════════════════════════════════════════════ */
+    let ROOMS = [
+      // Floor 1 (4 Computer Labs, 3 Lecture Rooms = 7 total rooms)
+      { code: 'CL-101', floor: '1F', type: 'CompLab', cap: 35, util: 92 },
+      { code: 'CL-102', floor: '1F', type: 'CompLab', cap: 35, util: 88 },
+      { code: 'CL-103', floor: '1F', type: 'CompLab', cap: 40, util: 95 },
+      { code: 'CL-104', floor: '1F', type: 'CompLab', cap: 30, util: 84 },
+      { code: 'LR-101', floor: '1F', type: 'Lecture', cap: 45, util: 82 },
+      { code: 'LR-102', floor: '1F', type: 'Lecture', cap: 45, util: 76 },
+      { code: 'LR-103', floor: '1F', type: 'Lecture', cap: 40, util: 70 },
+      // Floor 2 (6 Lecture Rooms)
+      { code: 'LR-201', floor: '2F', type: 'Lecture', cap: 45, util: 88 },
+      { code: 'LR-202', floor: '2F', type: 'Lecture', cap: 45, util: 82 },
+      { code: 'LR-203', floor: '2F', type: 'Lecture', cap: 40, util: 76 },
+      { code: 'LR-204', floor: '2F', type: 'Lecture', cap: 40, util: 91 },
+      { code: 'LR-205', floor: '2F', type: 'Lecture', cap: 50, util: 84 },
+      { code: 'LR-206', floor: '2F', type: 'Lecture', cap: 45, util: 68 },
+      // Floor 3 (6 Lecture Rooms)
+      { code: 'LR-301', floor: '3F', type: 'Lecture', cap: 50, util: 70 },
+      { code: 'LR-302', floor: '3F', type: 'Lecture', cap: 50, util: 65 },
+      { code: 'LR-303', floor: '3F', type: 'Lecture', cap: 45, util: 78 },
+      { code: 'LR-304', floor: '3F', type: 'Lecture', cap: 45, util: 72 },
+      { code: 'LR-305', floor: '3F', type: 'Lecture', cap: 40, util: 68 },
+      { code: 'LR-306', floor: '3F', type: 'Lecture', cap: 45, util: 62 },
+    ];
+
+    const SUBJECTS = [
+      'ITE 101','CC 103','ITE 301','CS 201','IM 101','GE 107',
+      'ITE 202','CC 104','CS 301','IT 312','HM 201','TM 301',
+      'BA 101','GE 201','PE 102','NSTP 1','ITE 401','CS 401',
+    ];
+
+    let DEPARTMENTS = ['IT / CS', 'Engineering', 'Hospitality', 'Business Admin', 'General Education'];
+
+    let FACULTY = [
+      { name: 'Academic Head', email: 'acah@sti.edu', dept: 'IT / CS', status: 'Full-time', load: 18, maxLoad: 24, quals: ['ITE 101','CC 103','ITE 301','ITE 202'], bg: '#25447A' },
+      { name: 'Program Head', email: 'proh@sti.edu', dept: 'IT / CS', status: 'Full-time', load: 18, maxLoad: 24, quals: ['CS 201','CS 301','CS 401','CC 104'], bg: '#2E7D5B' }
+    ];
+
+    let USERS = [
+      { name: 'System Administrator', email: 'admin@sti.edu', role: 'admin', roleLabel: 'System Admin', lastActive: 'Just now', status: 'Online' },
+      { name: 'Academic Head', email: 'acah@sti.edu', role: 'academic-head', roleLabel: 'Academic Head', lastActive: '5 min ago', status: 'Online' },
+      { name: 'Program Head', email: 'proh@sti.edu', role: 'program-head', roleLabel: 'Program Head', lastActive: '10 min ago', status: 'Online' }
+    ];
+
+    const DAYS_ABBR = ['M','T','W','Th','F','S'];
+    const TIME_SLOTS = ['7:00–8:30','8:30–10:00','10:00–11:30','11:30–1:00','1:00–2:30','2:30–4:00','4:00–5:30','5:30–7:00'];
+
+    /* ═══════════════════════════════════════════════════
+       NAVIGATION — Module switching
+       ═══════════════════════════════════════════════════ */
+
+    const MODULE_TITLES = {
+      schedule: { title: 'Interactive Schedule Management Dashboard', sub: '1st Semester AY 2026–2027 · 342 sections across 19 rooms' },
+      minimap:  { title: 'AI Integrated Campus Map & Utilization', sub: 'Real-time room availability across 3 floors' },
+      rooms:    { title: 'Room Information', sub: '15 lecture rooms · 4 computer labs · 835 total capacity' },
+      faculty:  { title: 'Faculty & Resource Profiling', sub: 'Time availability, teaching loads & MAQ certifications' },
+      users:    { title: 'User Management & Security', sub: 'Role-based access control & audit trail' },
+    };
+
+    document.querySelectorAll('.nav-item[data-module]').forEach(item => {
+      item.addEventListener('click', () => {
+        const mod = item.dataset.module;
+        // Toggle nav active
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        // Toggle page
+        document.querySelectorAll('.module-page').forEach(p => p.classList.remove('active'));
+        const pageEl = document.getElementById(`page-${mod}`);
+        if (pageEl) pageEl.classList.add('active');
+        // Update header
+        const info = MODULE_TITLES[mod];
+        if (info) {
+          document.getElementById('headerTitle').textContent = info.title;
+          document.getElementById('headerSubtitle').textContent = info.sub;
+        }
+      });
+    });
+
+    /* ═══════════════════════════════════════════════════
+       USER MENU & LOGOUT
+       ═══════════════════════════════════════════════════ */
+
+    window.toggleUserMenu = function(e) {
+      if (e) e.stopPropagation();
+      const menu = document.getElementById('userDropdownMenu');
+      if (menu) {
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+      }
+    };
+
+    document.addEventListener('click', function(e) {
+      const menu = document.getElementById('userDropdownMenu');
+      const btn = document.getElementById('userMenuBtn');
+      if (menu && menu.style.display === 'block' && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+        menu.style.display = 'none';
+      }
+    });
+
+    window.logoutUser = function() {
+      const menu = document.getElementById('userDropdownMenu');
+      if (menu) menu.style.display = 'none';
+      
+      const appShell = document.getElementById('appShell');
+      const loginPage = document.getElementById('loginPage');
+      if (appShell && loginPage) {
+        appShell.style.display = 'none';
+        loginPage.style.display = 'flex';
+        loginPage.classList.remove('hidden');
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
+      }
+    };
+
+    /* ═══════════════════════════════════════════════════
+       MODULE 1 — MASTER SCHEDULE GRID + DRAG & DROP
+       ═══════════════════════════════════════════════════ */
+
+    function generateScheduleData() {
+      const data = {};
+      const programs = ['BSIT', 'BSCS', 'BSCpE', 'BSHM', 'BSTM', 'BSBA'];
+
+      // Initialize empty rooms
+      ROOMS.forEach(room => {
+        data[room.code] = {};
+      });
+
+      // Track assigned faculty and sections per time slot to prevent duplicates/overlaps
+      const bookedFacultyPerSlot = Array.from({ length: TIME_SLOTS.length }, () => new Set());
+      const bookedSectionsPerSlot = Array.from({ length: TIME_SLOTS.length }, () => new Set());
+
+      // Pre-reserve demo conflict slot if LR-201 exists so Academic Head is not booked elsewhere at slot 2
+      bookedFacultyPerSlot[2].add('Academic Head');
+
+      // Distribute classes per time slot across rooms with strict 1:1 faculty availability
+      TIME_SLOTS.forEach((slot, si) => {
+        // Shuffle rooms for realistic, varied allocation
+        const shuffledRooms = [...ROOMS].sort(() => Math.random() - 0.5);
+
+        shuffledRooms.forEach(room => {
+          // Reserve slot 2 in LR-201 for the demo conflict
+          if (room.code === 'LR-201' && si === 2) return;
+
+          // ~65% target utilization
+          if (Math.random() < 0.65) {
+            // Filter strictly for faculty not yet booked anywhere at this exact time slot
+            const freeFaculty = FACULTY.filter(f => !bookedFacultyPerSlot[si].has(f.name));
+            if (freeFaculty.length === 0) return; // All faculty busy at this time frame
+
+            // Prefer technical faculty for computer labs
+            let candidateFaculty = freeFaculty;
+            if (room.type === 'CompLab') {
+              const techFaculty = freeFaculty.filter(f => f.dept === 'IT / CS' || f.dept === 'Engineering');
+              if (techFaculty.length > 0) candidateFaculty = techFaculty;
+            }
+
+            const fac = candidateFaculty[Math.floor(Math.random() * candidateFaculty.length)];
+            const subj = fac.quals && fac.quals.length > 0 
+              ? fac.quals[Math.floor(Math.random() * fac.quals.length)]
+              : SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)];
+
+            // Derive appropriate academic program
+            let prog = 'BSIT';
+            if (fac.dept === 'Engineering') prog = 'BSCpE';
+            else if (fac.dept === 'Hospitality') prog = Math.random() < 0.5 ? 'BSHM' : 'BSTM';
+            else if (fac.dept === 'Business Admin') prog = 'BSBA';
+            else if (fac.dept === 'General Education') prog = programs[Math.floor(Math.random() * programs.length)];
+            else prog = Math.random() < 0.5 ? 'BSIT' : 'BSCS';
+
+            const yr = Math.ceil(Math.random() * 4);
+            const secLetter = String.fromCharCode(65 + Math.floor(Math.random() * 3));
+            let section = `${prog} ${yr}${secLetter}`;
+
+            let attempt = 0;
+            while (bookedSectionsPerSlot[si].has(section) && attempt < 5) {
+              const altLetter = String.fromCharCode(65 + Math.floor(Math.random() * 4));
+              section = `${prog} ${yr}${altLetter}`;
+              attempt++;
+            }
+
+            const types = ['ai-generated', 'ai-generated', 'ai-generated', 'manual-override'];
+            const type = types[Math.floor(Math.random() * types.length)];
+
+            data[room.code][si] = {
+              subj,
+              faculty: fac.name,
+              section,
+              program: prog,
+              year: String(yr),
+              type,
+              id: `${room.code}-${si}`
+            };
+
+            // Lock this faculty member and section for this time slot
+            bookedFacultyPerSlot[si].add(fac.name);
+            bookedSectionsPerSlot[si].add(section);
+          }
+        });
+      });
+
+      // Force demo conflict in LR-201 at slot 2
+      if (data['LR-201']) {
+        data['LR-201'][2] = {
+          subj: 'ITE 101',
+          faculty: 'Academic Head',
+          section: 'BSIT 1A',
+          program: 'BSIT',
+          year: '1',
+          type: 'conflict',
+          id: 'LR-201-2'
+        };
+      }
+
+      return data;
+    }
+
+    let scheduleData = generateScheduleData();
+    let draggedBlock = null;
+    let dragSourceCell = null;
+
+    function renderGrid() {
+      const tbody = document.getElementById('gridBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const progFilter = document.getElementById('programFilter')?.value || 'all';
+      const yrFilter = document.getElementById('yearFilter')?.value || 'all';
+
+      Object.entries(scheduleData).forEach(([room, slots]) => {
+        const tr = document.createElement('tr');
+
+        // Room label
+        const roomTd = document.createElement('td');
+        const roomInfo = ROOMS.find(r => r.code === room);
+        roomTd.innerHTML = `<div>${room}</div><div style="font-size:10px;color:var(--text-secondary);font-weight:400;">${roomInfo?.type === 'CompLab' ? 'Lab' : 'Lecture'} · ${roomInfo?.cap || 40} seats</div>`;
+        tr.appendChild(roomTd);
+
+        // Time slots
+        TIME_SLOTS.forEach((_, si) => {
+          const td = document.createElement('td');
+          td.className = 'drop-zone';
+          td.dataset.room = room;
+          td.dataset.slot = si;
+
+          if (slots[si]) {
+            const blockData = slots[si];
+            const matchProg = progFilter === 'all' || blockData.program === progFilter;
+            const matchYr = yrFilter === 'all' || blockData.year === yrFilter;
+            if (matchProg && matchYr) {
+              const block = createBlock(blockData);
+              td.appendChild(block);
+            }
+          }
+
+          // Drop zone events
+          td.addEventListener('dragover', handleDragOver);
+          td.addEventListener('dragenter', handleDragEnter);
+          td.addEventListener('dragleave', handleDragLeave);
+          td.addEventListener('drop', handleDrop);
+
+          // Right-click context menu (Add / Remove / Change Professor)
+          td.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            openScheduleContextMenu(e, room, si);
+          });
+
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Grid filters change listeners
+    document.getElementById('programFilter')?.addEventListener('change', renderGrid);
+    document.getElementById('yearFilter')?.addEventListener('change', renderGrid);
+
+    function createBlock(data) {
+      const block = document.createElement('div');
+      block.className = `schedule-block ${data.type}`;
+      block.draggable = true;
+      block.dataset.id = data.id;
+      block.title = 'Right-click to remove or change professor · Drag to move';
+      block.innerHTML = `
+        <div class="block-subject">${data.subj}</div>
+        <div class="block-meta">${data.faculty.split(' ').slice(-1)[0]} · ${data.section}</div>
+      `;
+
+      block.addEventListener('dragstart', handleDragStart);
+      block.addEventListener('dragend', handleDragEnd);
+
+      // Right-click context menu directly on block
+      block.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const parentTd = block.closest('.drop-zone');
+        if (parentTd) {
+          openScheduleContextMenu(e, parentTd.dataset.room, parseInt(parentTd.dataset.slot, 10));
+        }
+      });
+
+      return block;
+    }
+
+    function handleDragStart(e) {
+      draggedBlock = e.target;
+      dragSourceCell = e.target.closest('.drop-zone');
+      e.target.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', e.target.dataset.id);
+
+      const aiStatus = document.getElementById('aiStatus');
+      if (aiStatus) {
+        aiStatus.className = 'ai-status processing';
+        aiStatus.innerHTML = '<span class="ai-dot"></span> Monitoring Swap…';
+      }
+    }
+
+    function handleDragEnd(e) {
+      e.target.classList.remove('dragging');
+      document.querySelectorAll('.drop-zone.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+      const aiStatus = document.getElementById('aiStatus');
+      if (aiStatus) {
+        aiStatus.className = 'ai-status active';
+        aiStatus.innerHTML = '<span class="ai-dot"></span> AI Engine Active';
+      }
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleDragEnter(e) {
+      e.preventDefault();
+      const cell = e.target.closest('.drop-zone');
+      if (cell) cell.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+      const cell = e.target.closest('.drop-zone');
+      if (cell && !cell.contains(e.relatedTarget)) {
+        cell.classList.remove('drag-over');
+      }
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      const targetCell = e.target.closest('.drop-zone');
+      if (!targetCell || !draggedBlock) return;
+
+      targetCell.classList.remove('drag-over');
+
+      const sourceRoom = dragSourceCell.dataset.room;
+      const sourceSlot = parseInt(dragSourceCell.dataset.slot);
+      const targetRoom = targetCell.dataset.room;
+      const targetSlot = parseInt(targetCell.dataset.slot);
+
+      // Check if target already has a block — trigger conflict alert
+      const existingBlock = targetCell.querySelector('.schedule-block');
+      if (existingBlock && existingBlock !== draggedBlock) {
+        triggerConflictAlert(sourceRoom, sourceSlot, targetRoom, targetSlot);
+        return;
+      }
+
+      const sourceData = scheduleData[sourceRoom]?.[sourceSlot];
+      if (!sourceData) return;
+
+      // Check if the instructor is already teaching in another room at targetSlot
+      let overlappingRoom = null;
+      for (const roomCode of Object.keys(scheduleData)) {
+        if (roomCode !== sourceRoom && scheduleData[roomCode]?.[targetSlot]?.faculty === sourceData.faculty) {
+          overlappingRoom = roomCode;
+          break;
+        }
+      }
+
+      if (overlappingRoom) {
+        triggerFacultyOverlapAlert(sourceData.faculty, overlappingRoom, targetSlot, targetRoom);
+        return;
+      }
+
+      // Check if the section is already attending class in another room at targetSlot
+      let overlappingSecRoom = null;
+      for (const roomCode of Object.keys(scheduleData)) {
+        if (roomCode !== sourceRoom && scheduleData[roomCode]?.[targetSlot]?.section === sourceData.section) {
+          overlappingSecRoom = roomCode;
+          break;
+        }
+      }
+
+      if (overlappingSecRoom) {
+        triggerSectionOverlapAlert(sourceData.section, overlappingSecRoom, targetSlot, targetRoom);
+        return;
+      }
+
+      // Perform schedule relocation
+      if (!scheduleData[targetRoom]) scheduleData[targetRoom] = {};
+      sourceData.type = 'manual-override';
+      sourceData.id = `${targetRoom}-${targetSlot}`;
+      scheduleData[targetRoom][targetSlot] = sourceData;
+      delete scheduleData[sourceRoom][sourceSlot];
+
+      renderGrid();
+
+      const aiStatus = document.getElementById('aiStatus');
+      if (aiStatus) {
+        aiStatus.className = 'ai-status processing';
+        aiStatus.innerHTML = '<span class="ai-dot"></span> Validating constraints…';
+        setTimeout(() => {
+          aiStatus.className = 'ai-status active';
+          aiStatus.innerHTML = '<span class="ai-dot"></span> AI Engine Active';
+        }, 1200);
+      }
+    }
+
+    function triggerConflictAlert(srcRoom, srcSlot, tgtRoom, tgtSlot) {
+      const srcData = scheduleData[srcRoom]?.[srcSlot];
+      const tgtData = scheduleData[tgtRoom]?.[tgtSlot];
+
+      if (srcData && tgtData) {
+        const toast = document.getElementById('conflictToast');
+        document.getElementById('toastTitle').textContent = 'Room Conflict Detected';
+        document.getElementById('toastMsg').textContent =
+          `Room ${tgtRoom} at ${TIME_SLOTS[tgtSlot]} is occupied by ${tgtData.faculty} (${tgtData.subj}). Cannot place ${srcData.faculty} (${srcData.subj}) into the same room.`;
+        toast.classList.add('show');
+      }
+    }
+
+    function triggerFacultyOverlapAlert(facName, bookedRoom, tgtSlot, attemptedRoom) {
+      const toast = document.getElementById('conflictToast');
+      document.getElementById('toastTitle').textContent = 'Faculty Overlap Prevented';
+      document.getElementById('toastMsg').textContent =
+        `Cannot assign ${facName} to ${attemptedRoom} at ${TIME_SLOTS[tgtSlot]} — this professor is already teaching in Room ${bookedRoom} during this time frame. Overlapping faculty schedules are not permitted.`;
+      toast.classList.add('show');
+    }
+
+    function triggerSectionOverlapAlert(secName, bookedRoom, tgtSlot, attemptedRoom) {
+      const toast = document.getElementById('conflictToast');
+      document.getElementById('toastTitle').textContent = 'Section Overlap Prevented';
+      document.getElementById('toastMsg').textContent =
+        `Cannot schedule section ${secName} to ${attemptedRoom} at ${TIME_SLOTS[tgtSlot]} — this section is already attending class in Room ${bookedRoom} during this time frame.`;
+      toast.classList.add('show');
+    }
+
+    function hideConflictToast() {
+      document.getElementById('conflictToast').classList.remove('show');
+    }
+
+    function resolveConflict() {
+      const aiStatus = document.getElementById('aiStatus');
+      if (aiStatus) {
+        aiStatus.className = 'ai-status processing';
+        aiStatus.innerHTML = '<span class="ai-dot"></span> AI resolving conflict…';
+      }
+
+      hideConflictToast();
+
+      setTimeout(() => {
+        if (scheduleData['LR-201']?.[2]?.type === 'conflict') {
+          scheduleData['LR-201'][2].type = 'ai-generated';
+          renderGrid();
+        }
+        if (aiStatus) {
+          aiStatus.className = 'ai-status active';
+          aiStatus.innerHTML = '<span class="ai-dot"></span> AI Engine Active';
+        }
+      }, 1200);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       SCHEDULE CONTEXT MENU & RIGHT-CLICK PROFESSOR ASSIGN/REMOVE
+       ═══════════════════════════════════════════════════ */
+    let ctxTargetRoom = null;
+    let ctxTargetSlot = null;
+
+    function openScheduleContextMenu(e, room, slotIdx) {
+      if (e) e.preventDefault();
+      ctxTargetRoom = room;
+      ctxTargetSlot = slotIdx;
+
+      const menu = document.getElementById('scheduleContextMenu');
+      if (!menu) return;
+
+      const slotData = scheduleData[room]?.[slotIdx];
+      const roomSlotText = `${room} · ${TIME_SLOTS[slotIdx]}`;
+      document.getElementById('ctxMenuRoomSlot').textContent = roomSlotText;
+
+      const btnAdd = document.getElementById('ctxBtnAdd');
+      const btnEdit = document.getElementById('ctxBtnEdit');
+      const btnRemove = document.getElementById('ctxBtnRemove');
+      const detailsEl = document.getElementById('ctxMenuDetails');
+
+      if (slotData) {
+        detailsEl.textContent = `${slotData.faculty} (${slotData.subj} · ${slotData.section})`;
+        btnAdd.style.display = 'none';
+        btnEdit.style.display = 'flex';
+        btnRemove.style.display = 'flex';
+      } else {
+        detailsEl.textContent = '(Vacant Slot)';
+        btnAdd.style.display = 'flex';
+        btnEdit.style.display = 'none';
+        btnRemove.style.display = 'none';
+      }
+
+      menu.style.display = 'block';
+      const menuWidth = 230;
+      const menuHeight = 150;
+      const posX = Math.min(e.clientX, window.innerWidth - menuWidth - 12);
+      const posY = Math.min(e.clientY, window.innerHeight - menuHeight - 12);
+      menu.style.left = `${Math.max(10, posX)}px`;
+      menu.style.top = `${Math.max(10, posY)}px`;
+    }
+
+    function closeScheduleContextMenu() {
+      const menu = document.getElementById('scheduleContextMenu');
+      if (menu) menu.style.display = 'none';
+    }
+
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('scheduleContextMenu');
+      if (menu && menu.style.display !== 'none' && !menu.contains(e.target)) {
+        closeScheduleContextMenu();
+      }
+    });
+
+    window.triggerCtxRemove = function() {
+      if (!ctxTargetRoom || ctxTargetSlot === null) return;
+      const slotData = scheduleData[ctxTargetRoom]?.[ctxTargetSlot];
+      if (slotData) {
+        const facName = slotData.faculty;
+        delete scheduleData[ctxTargetRoom][ctxTargetSlot];
+        renderGrid();
+
+        const toastTitle = document.getElementById('toastTitle');
+        const toastMsg = document.getElementById('toastMsg');
+        const toast = document.getElementById('conflictToast');
+        if (toast && toastTitle && toastMsg) {
+          toastTitle.textContent = 'Professor Removed';
+          toastMsg.textContent = `Removed ${facName} from ${ctxTargetRoom} at ${TIME_SLOTS[ctxTargetSlot]}. Slot is now vacant.`;
+          toast.classList.add('show');
+          setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+      }
+      closeScheduleContextMenu();
+    };
+
+    window.triggerCtxAdd = function() {
+      openSlotModal(ctxTargetRoom, ctxTargetSlot, false);
+      closeScheduleContextMenu();
+    };
+
+    window.triggerCtxEdit = function() {
+      openSlotModal(ctxTargetRoom, ctxTargetSlot, true);
+      closeScheduleContextMenu();
+    };
+
+    function openSlotModal(room, slotIdx, isEdit) {
+      document.getElementById('slotTargetRoom').value = room;
+      document.getElementById('slotTargetIdx').value = slotIdx;
+      document.getElementById('slotRoomDisplay').value = room;
+      document.getElementById('slotTimeDisplay').value = TIME_SLOTS[slotIdx];
+      document.getElementById('slotModalTitle').textContent = isEdit ? 'Change Professor / Reassign Slot' : 'Assign Professor to Slot';
+
+      const errEl = document.getElementById('slotModalError');
+      if (errEl) errEl.style.display = 'none';
+
+      const facSelect = document.getElementById('slotFacultySelect');
+      facSelect.innerHTML = '';
+
+      const currentData = scheduleData[room]?.[slotIdx];
+
+      if (FACULTY.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'No faculty registered';
+        facSelect.appendChild(opt);
+      } else {
+        FACULTY.forEach(fac => {
+          const opt = document.createElement('option');
+          opt.value = fac.name;
+
+          // Check if faculty is already booked in another room at this exact slot
+          let isBookedElsewhere = false;
+          for (const otherRoom of Object.keys(scheduleData)) {
+            if (otherRoom !== room && scheduleData[otherRoom]?.[slotIdx]?.faculty === fac.name) {
+              isBookedElsewhere = true;
+              break;
+            }
+          }
+
+          opt.textContent = `${fac.name} (${fac.dept})${isBookedElsewhere ? ' — [Booked at this time]' : ' — Available'}`;
+          if (isBookedElsewhere && (!currentData || currentData.faculty !== fac.name)) {
+            opt.disabled = true;
+          }
+          if (currentData && currentData.faculty === fac.name) {
+            opt.selected = true;
+          }
+          facSelect.appendChild(opt);
+        });
+      }
+
+      if (currentData) {
+        document.getElementById('slotSubjectInput').value = currentData.subj || 'ITE 101';
+        document.getElementById('slotProgramSelect').value = currentData.program || 'BSIT';
+        document.getElementById('slotSectionInput').value = currentData.section || 'BSIT 1A';
+      } else {
+        const selectedFac = FACULTY.find(f => f.name === facSelect.value);
+        document.getElementById('slotSubjectInput').value = selectedFac?.quals?.[0] || 'ITE 101';
+        document.getElementById('slotProgramSelect').value = 'BSIT';
+        document.getElementById('slotSectionInput').value = 'BSIT 1A';
+      }
+
+      document.getElementById('slotModal').style.display = 'flex';
+    }
+
+    window.closeSlotModal = function() {
+      const err = document.getElementById('slotModalError');
+      if (err) err.style.display = 'none';
+      document.getElementById('slotModal').style.display = 'none';
+    };
+
+    window.handleSlotFacultyChange = function(facultyName) {
+      const fac = FACULTY.find(f => f.name === facultyName);
+      if (fac && fac.quals && fac.quals.length > 0) {
+        document.getElementById('slotSubjectInput').value = fac.quals[0];
+      }
+    };
+
+    window.submitSlotAssignment = function() {
+      const room = document.getElementById('slotTargetRoom').value;
+      const slotIdx = parseInt(document.getElementById('slotTargetIdx').value, 10);
+      const faculty = document.getElementById('slotFacultySelect').value;
+      const subj = document.getElementById('slotSubjectInput').value.trim() || 'ITE 101';
+      const program = document.getElementById('slotProgramSelect').value || 'BSIT';
+      const section = document.getElementById('slotSectionInput').value.trim() || 'BSIT 1A';
+      const errEl = document.getElementById('slotModalError');
+
+      if (!faculty) {
+        if (errEl) {
+          errEl.textContent = 'Please select a faculty member.';
+          errEl.style.display = 'block';
+        }
+        return;
+      }
+
+      // Check for faculty conflict at target time slot
+      for (const otherRoom of Object.keys(scheduleData)) {
+        if (otherRoom !== room && scheduleData[otherRoom]?.[slotIdx]?.faculty === faculty) {
+          if (errEl) {
+            errEl.textContent = `Overlap Conflict: ${faculty} is already teaching in room ${otherRoom} during ${TIME_SLOTS[slotIdx]}.`;
+            errEl.style.display = 'block';
+          }
+          return;
+        }
+      }
+
+      if (!scheduleData[room]) scheduleData[room] = {};
+      scheduleData[room][slotIdx] = {
+        subj,
+        faculty,
+        section,
+        program,
+        year: section.match(/\d/)?.[0] || '1',
+        type: 'manual-override',
+        id: `${room}-${slotIdx}`
+      };
+
+      closeSlotModal();
+      renderGrid();
+    };
+
+    // Baseline & Export buttons in Master Schedule
+    document.getElementById('btnGenerate')?.addEventListener('click', () => {
+      const aiStatus = document.getElementById('aiStatus');
+      if (aiStatus) {
+        aiStatus.className = 'ai-status processing';
+        aiStatus.innerHTML = '<span class="ai-dot"></span> Generating baseline timetable…';
+      }
+
+      setTimeout(() => {
+        scheduleData = generateScheduleData();
+        renderGrid();
+        if (aiStatus) {
+          aiStatus.className = 'ai-status active';
+          aiStatus.innerHTML = '<span class="ai-dot"></span> AI Engine Active';
+        }
+      }, 1500);
+    });
+
+    document.getElementById('btnExport')?.addEventListener('click', () => {
+      alert('Master schedule timetable exported successfully as CSV/PDF.');
+    });
+
+    /* ═══════════════════════════════════════════════════
+       MODULE 2 — CAMPUS MINI MAP (All Labs on 1st Floor)
+       ═══════════════════════════════════════════════════ */
+
+    function renderFloorMap(floor) {
+      const canvas = document.getElementById('floorCanvas');
+      if (!canvas) return;
+      canvas.innerHTML = '';
+
+      const floorRooms = ROOMS.filter(r => r.floor === floor);
+      const statuses = ['available', 'occupied', 'available', 'partial', 'occupied'];
+
+      floorRooms.forEach((room, i) => {
+        const status = statuses[i % statuses.length];
+        const cell = document.createElement('div');
+        cell.className = `room-cell ${status}`;
+        cell.style.cursor = 'pointer';
+        cell.innerHTML = `
+          <div class="room-status-dot"></div>
+          <div class="room-id">${room.code}</div>
+          <div class="room-type">${room.type === 'CompLab' ? '💻 Computer Lab' : '📚 Lecture Room'}</div>
+          <div style="font-size:10px; color:var(--text-secondary); margin-top:4px;">${room.cap} seats</div>
+          <div style="font-size:9.5px; color:var(--accent-primary); font-weight:600; margin-top:6px;">View Schedule →</div>
+        `;
+        cell.addEventListener('click', () => {
+          showRoomSchedule(room.code);
+        });
+        canvas.appendChild(cell);
+      });
+    }
+
+    window.showRoomSchedule = function(roomCode) {
+      const room = ROOMS.find(r => r.code === roomCode);
+      if (!room) return;
+
+      document.getElementById('schedModalRoomCode').textContent = `${room.code} Timetable`;
+      document.getElementById('schedModalRoomMeta').textContent = `${room.floor} · ${room.type === 'CompLab' ? 'Computer Lab' : 'Lecture Room'} · Capacity: ${room.cap} seats`;
+
+      const tbody = document.getElementById('schedModalTableBody');
+      tbody.innerHTML = '';
+
+      TIME_SLOTS.forEach((slot, si) => {
+        const tr = document.createElement('tr');
+        const block = scheduleData[room.code]?.[si];
+
+        if (block) {
+          const typeBadge = block.type === 'conflict' ? 'badge-danger' : block.type === 'manual-override' ? 'badge-warning' : 'badge-lab';
+          tr.innerHTML = `
+            <td style="font-weight:600; font-size:12px; color:var(--text-primary);">${slot}</td>
+            <td>
+              <div style="font-weight:600; font-size:13px; color:var(--accent-primary);">${block.subj}</div>
+              <span class="badge ${typeBadge}" style="font-size:10px; margin-top:3px;">${block.type}</span>
+            </td>
+            <td style="font-size:12.5px;">${block.faculty}</td>
+            <td><span class="qual-tag" style="background:#EEF1F7; color:var(--accent-primary); font-weight:600;">${block.section}</span></td>
+          `;
+        } else {
+          tr.innerHTML = `
+            <td style="font-weight:600; font-size:12px; color:var(--text-primary);">${slot}</td>
+            <td colspan="3" style="color:var(--text-secondary); font-size:12px; font-style:italic;">
+              <span class="badge badge-success" style="font-size:10px; margin-right:6px;">Available</span> Vacant Slot
+            </td>
+          `;
+        }
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('roomScheduleModal').style.display = 'flex';
+    };
+
+    window.closeRoomScheduleModal = function() {
+      document.getElementById('roomScheduleModal').style.display = 'none';
+    };
+
+    document.querySelectorAll('.floor-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.floor-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        renderFloorMap(tab.dataset.floor + 'F');
+      });
+    });
+
+    /* ═══════════════════════════════════════════════════
+       MODULE 3 — ROOM INFORMATION (ADD / EDIT / REMOVE)
+       ═══════════════════════════════════════════════════ */
+
+    function renderRoomTable() {
+      const tbody = document.getElementById('roomTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      ROOMS.forEach(room => {
+        const tr = document.createElement('tr');
+        const utilColor = room.util > 90 ? 'var(--danger)' : room.util > 75 ? 'var(--warning)' : 'var(--success)';
+        const typeBadge = room.type === 'CompLab' ? 'badge-lab' : 'badge-lecture';
+
+        tr.innerHTML = `
+          <td style="font-weight:700;">${room.code}</td>
+          <td>${room.floor}</td>
+          <td><span class="badge ${typeBadge}">${room.type === 'CompLab' ? '💻 Computer Lab' : '📚 Lecture Room'}</span></td>
+          <td>${room.cap} seats</td>
+          <td>
+            <span style="font-weight:600; color:${utilColor};">${room.util}%</span>
+            <div class="capacity-bar"><div class="capacity-bar-fill" style="width:${room.util}%; background:${utilColor};"></div></div>
+          </td>
+          <td style="text-align:right;">
+            <button class="btn btn-outline" style="font-size:11px; padding:3px 8px; margin-right:4px;" onclick="openEditRoomModal('${room.code}')">Edit</button>
+            <button class="btn btn-outline" style="font-size:11px; padding:3px 8px; color:var(--danger); border-color:#fadbd8;" onclick="deleteRoom('${room.code}')">Remove</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    window.openAddRoomModal = function() {
+      document.getElementById('roomModalTitle').textContent = 'Add Room';
+      document.getElementById('roomEditOriginalCode').value = '';
+      document.getElementById('roomCodeInput').value = '';
+      document.getElementById('roomCodeInput').disabled = false;
+      document.getElementById('roomFloorInput').value = '1F';
+      document.getElementById('roomTypeInput').value = 'Lecture';
+      document.getElementById('roomCapInput').value = '45';
+      document.getElementById('roomModalSubmitBtn').textContent = 'Add Room';
+      document.getElementById('roomModal').style.display = 'flex';
+    };
+
+    window.openEditRoomModal = function(code) {
+      const room = ROOMS.find(r => r.code === code);
+      if (!room) return;
+      document.getElementById('roomModalTitle').textContent = `Edit Room (${room.code})`;
+      document.getElementById('roomEditOriginalCode').value = room.code;
+      document.getElementById('roomCodeInput').value = room.code;
+      document.getElementById('roomCodeInput').disabled = true;
+      document.getElementById('roomFloorInput').value = room.floor;
+      document.getElementById('roomTypeInput').value = room.type;
+      document.getElementById('roomCapInput').value = room.cap;
+      document.getElementById('roomModalSubmitBtn').textContent = 'Save Changes';
+      document.getElementById('roomModal').style.display = 'flex';
+    };
+
+    window.closeRoomModal = function() {
+      document.getElementById('roomModal').style.display = 'none';
+    };
+
+    window.submitRoomForm = function() {
+      const origCode = document.getElementById('roomEditOriginalCode').value;
+      const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+      const floor = document.getElementById('roomFloorInput').value;
+      const type = document.getElementById('roomTypeInput').value;
+      const cap = parseInt(document.getElementById('roomCapInput').value, 10);
+
+      if (!code || isNaN(cap) || cap < 1) {
+        alert('Please provide a valid room code and positive capacity.');
+        return;
+      }
+
+      if (origCode) {
+        const room = ROOMS.find(r => r.code === origCode);
+        if (room) {
+          room.floor = floor;
+          room.type = type;
+          room.cap = cap;
+        }
+      } else {
+        if (ROOMS.some(r => r.code === code)) {
+          alert(`Room ${code} already exists.`);
+          return;
+        }
+        ROOMS.push({
+          code,
+          floor,
+          type,
+          cap,
+          util: Math.floor(Math.random() * 30 + 60)
+        });
+      }
+
+      closeRoomModal();
+      renderRoomTable();
+      const activeFloor = document.querySelector('.floor-tab.active')?.dataset.floor || '1';
+      renderFloorMap(activeFloor + 'F');
+      renderGrid();
+    };
+
+    window.deleteRoom = function(code) {
+      if (!confirm(`Are you sure you want to remove ${code}? This is useful if the room is decommissioned or undergoing maintenance.`)) {
+        return;
+      }
+      ROOMS = ROOMS.filter(r => r.code !== code);
+      if (scheduleData[code]) {
+        delete scheduleData[code];
+      }
+      renderRoomTable();
+      const activeFloor = document.querySelector('.floor-tab.active')?.dataset.floor || '1';
+      renderFloorMap(activeFloor + 'F');
+      renderGrid();
+    };
+
+    /* ═══════════════════════════════════════════════════
+       MODULE 4 — FACULTY PROFILES & DEPARTMENT MANAGEMENT
+       ═══════════════════════════════════════════════════ */
+
+    function renderDeptFilterOptions() {
+      const select = document.getElementById('facultyDeptFilter');
+      if (!select) return;
+      const currentVal = select.value;
+      select.innerHTML = '<option value="all">All Departments</option>';
+      DEPARTMENTS.forEach(dept => {
+        const opt = document.createElement('option');
+        opt.value = dept;
+        opt.textContent = dept;
+        if (dept === currentVal) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    function renderFacultyCards() {
+      const grid = document.getElementById('facultyGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const deptFilter = document.getElementById('facultyDeptFilter')?.value || 'all';
+      const statusFilter = document.getElementById('facultyStatusFilter')?.value || 'all';
+
+      const filtered = FACULTY.filter(fac => {
+        const matchDept = deptFilter === 'all' || fac.dept === deptFilter;
+        const matchStatus = statusFilter === 'all' || fac.status === statusFilter;
+        return matchDept && matchStatus;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; padding: 48px 24px; text-align: center; color: var(--text-secondary); background: white; border-radius: var(--radius-md); border: 1px dashed var(--border-subtle);">
+            <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;">No faculty profiles found</div>
+            <div style="font-size: 12.5px;">No faculty members match the selected department and status filter criteria.</div>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(fac => {
+        const initials = fac.name.split(' ').filter(w => w.length > 1).map(w => w[0]).join('').slice(0,2);
+        const loadPct = Math.round((fac.load / fac.maxLoad) * 100);
+        const loadColor = loadPct >= 100 ? 'var(--danger)' : loadPct >= 80 ? 'var(--warning)' : 'var(--success)';
+
+        const availHtml = DAYS_ABBR.map(day => {
+          const am = Math.random() > 0.3 ? 'open' : 'busy';
+          const pm = Math.random() > 0.4 ? 'open' : 'busy';
+          return `<div style="display:flex;flex-direction:column;gap:2px;">
+            <div class="avail-slot header">${day}</div>
+            <div class="avail-slot ${am}">AM</div>
+            <div class="avail-slot ${pm}">PM</div>
+          </div>`;
+        }).join('');
+
+        const qualsHtml = (fac.quals || []).map(q => `<span class="qual-tag locked">${q}</span>`).join('');
+
+        const card = document.createElement('div');
+        card.className = 'faculty-card';
+        card.innerHTML = `
+          <div class="faculty-card-header">
+            <div class="faculty-avatar" style="background:${fac.bg};">${initials}</div>
+            <div style="flex:1;">
+              <div class="faculty-name">${fac.name}</div>
+              <div class="faculty-dept" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <span>${fac.dept} · ${fac.status}</span>
+                <span class="badge badge-success" style="font-size:10px; padding:1px 6px;">✓ Account: ${fac.email}</span>
+                <button class="btn btn-outline" style="font-size:10px; padding:1px 6px; border-radius:4px;" onclick="changeFacultyDept('${fac.name}')">Edit Dept</button>
+              </div>
+            </div>
+            <span class="badge" style="background:${loadColor}20; color:${loadColor}; border:1px solid ${loadColor}40; font-size:11px;">${loadPct}% Load</span>
+          </div>
+          <div class="faculty-body">
+            <div class="faculty-meta-row">
+              <span class="faculty-meta-label">Current Load</span>
+              <span class="faculty-meta-value">${fac.load} / ${fac.maxLoad} hrs</span>
+            </div>
+            <div style="height:6px; background:#ECEEF2; border-radius:3px; overflow:hidden; margin-bottom:14px;">
+              <div style="height:100%; width:${loadPct}%; background:${loadColor}; border-radius:3px; transition:width 0.6s ease;"></div>
+            </div>
+            <div class="faculty-meta-label" style="margin-bottom:6px;">Weekly Availability</div>
+            <div class="avail-grid" style="grid-template-columns:repeat(6,1fr);">
+              ${availHtml}
+            </div>
+            <div class="faculty-meta-label" style="margin-top:14px; margin-bottom:6px;">MAQ Certifications</div>
+            <div class="qual-tags">${qualsHtml}</div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // Faculty filter change listeners
+    document.getElementById('facultyDeptFilter')?.addEventListener('change', renderFacultyCards);
+    document.getElementById('facultyStatusFilter')?.addEventListener('change', renderFacultyCards);
+
+    // Department Management functions
+    window.openDeptModal = function() {
+      renderDeptList();
+      document.getElementById('newDeptInput').value = '';
+      document.getElementById('deptModal').style.display = 'flex';
+    };
+
+    window.closeDeptModal = function() {
+      document.getElementById('deptModal').style.display = 'none';
+    };
+
+    function renderDeptList() {
+      const container = document.getElementById('deptListContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      DEPARTMENTS.forEach((dept, idx) => {
+        const facultyCount = FACULTY.filter(f => f.dept === dept).length;
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#F8FAFD; border:1px solid var(--border-subtle); border-radius:8px; gap:8px;';
+        row.innerHTML = `
+          <div style="flex:1;">
+            <div style="font-weight:600; font-size:13px; color:var(--text-primary);">${dept}</div>
+            <div style="font-size:11px; color:var(--text-secondary);">${facultyCount} faculty assigned</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px;" onclick="editDepartment(${idx})">Edit</button>
+            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; color:var(--danger); border-color:#fadbd8;" onclick="deleteDepartment(${idx})">Delete</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    window.addDepartment = function() {
+      const input = document.getElementById('newDeptInput');
+      const name = input.value.trim();
+      if (!name) {
+        alert('Please enter a department name.');
+        return;
+      }
+      if (DEPARTMENTS.some(d => d.toLowerCase() === name.toLowerCase())) {
+        alert('This department already exists.');
+        return;
+      }
+      DEPARTMENTS.push(name);
+      input.value = '';
+      renderDeptList();
+      renderDeptFilterOptions();
+      renderFacultyCards();
+    };
+
+    window.editDepartment = function(idx) {
+      const oldName = DEPARTMENTS[idx];
+      const newName = prompt('Enter new name for department:', oldName);
+      if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
+      const trimmed = newName.trim();
+      if (DEPARTMENTS.some((d, i) => i !== idx && d.toLowerCase() === trimmed.toLowerCase())) {
+        alert('A department with that name already exists.');
+        return;
+      }
+      DEPARTMENTS[idx] = trimmed;
+      FACULTY.forEach(f => {
+        if (f.dept === oldName) f.dept = trimmed;
+      });
+      renderDeptList();
+      renderDeptFilterOptions();
+      renderFacultyCards();
+    };
+
+    window.deleteDepartment = function(idx) {
+      if (DEPARTMENTS.length <= 1) {
+        alert('At least one department must remain.');
+        return;
+      }
+      const target = DEPARTMENTS[idx];
+      if (!confirm(`Are you sure you want to remove the "${target}" department? Affected faculty will be reassigned.`)) {
+        return;
+      }
+      DEPARTMENTS.splice(idx, 1);
+      const fallback = DEPARTMENTS[0];
+      FACULTY.forEach(f => {
+        if (f.dept === target) f.dept = fallback;
+      });
+      renderDeptList();
+      renderDeptFilterOptions();
+      renderFacultyCards();
+    };
+
+    window.changeFacultyDept = function(facName) {
+      const fac = FACULTY.find(f => f.name === facName);
+      if (!fac) return;
+      const promptMsg = `Select new department for ${fac.name}:\n\n` + DEPARTMENTS.map((d, i) => `${i + 1}. ${d}`).join('\n') + `\n\nEnter number or name:`;
+      const choice = prompt(promptMsg, fac.dept);
+      if (!choice) return;
+      
+      const num = parseInt(choice.trim(), 10);
+      if (!isNaN(num) && num >= 1 && num <= DEPARTMENTS.length) {
+        fac.dept = DEPARTMENTS[num - 1];
+      } else {
+        const found = DEPARTMENTS.find(d => d.toLowerCase() === choice.trim().toLowerCase());
+        if (found) {
+          fac.dept = found;
+        } else {
+          alert(`Invalid selection. Please choose from: ${DEPARTMENTS.join(', ')}`);
+          return;
+        }
+      }
+      renderFacultyCards();
+      renderDeptList();
+    };
+
+    // Add Faculty Modal Functions
+    window.openAddFacultyModal = function() {
+      const userSelect = document.getElementById('newFacUserSelect');
+      if (userSelect) {
+        userSelect.innerHTML = '';
+        // Registered accounts in User Management eligible for teaching
+        const registeredFacultyUsers = USERS.filter(u => u.role === 'faculty' || u.role === 'program-head' || u.role === 'academic-head');
+        
+        if (registeredFacultyUsers.length === 0) {
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = 'No registered faculty accounts found in User Management';
+          userSelect.appendChild(opt);
+        } else {
+          registeredFacultyUsers.forEach(u => {
+            const opt = document.createElement('option');
+            opt.value = u.email;
+            const hasProfile = FACULTY.some(f => f.email.toLowerCase() === u.email.toLowerCase());
+            opt.textContent = `${u.name} (${u.email}) — ${u.roleLabel}${hasProfile ? ' [Profile Active]' : ''}`;
+            userSelect.appendChild(opt);
+          });
+        }
+      }
+
+      const deptSelect = document.getElementById('newFacDept');
+      deptSelect.innerHTML = '';
+      DEPARTMENTS.forEach(dept => {
+        const opt = document.createElement('option');
+        opt.value = dept;
+        opt.textContent = dept;
+        deptSelect.appendChild(opt);
+      });
+
+      document.getElementById('newFacStatus').value = 'Full-time';
+      document.getElementById('newFacMaxLoad').value = '24';
+      document.getElementById('newFacQuals').value = 'ITE 101, CC 103';
+
+      if (userSelect && userSelect.value) {
+        window.handleFacultyUserDropdownChange(userSelect.value);
+      }
+
+      document.getElementById('addFacultyModal').style.display = 'flex';
+    };
+
+    window.closeAddFacultyModal = function() {
+      document.getElementById('addFacultyModal').style.display = 'none';
+    };
+
+    window.handleFacultyUserDropdownChange = function(email) {
+      if (!email) return;
+      const user = USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (!user) return;
+
+      const deptSelect = document.getElementById('newFacDept');
+      for (let i = 0; i < deptSelect.options.length; i++) {
+        if (user.roleLabel.toLowerCase().includes(deptSelect.options[i].value.toLowerCase())) {
+          deptSelect.selectedIndex = i;
+          break;
+        }
+      }
+
+      const existingFac = FACULTY.find(f => f.email.toLowerCase() === email.toLowerCase());
+      if (existingFac) {
+        if (existingFac.dept) deptSelect.value = existingFac.dept;
+        if (existingFac.status) document.getElementById('newFacStatus').value = existingFac.status;
+        if (existingFac.maxLoad) document.getElementById('newFacMaxLoad').value = existingFac.maxLoad;
+        if (existingFac.quals) document.getElementById('newFacQuals').value = existingFac.quals.join(', ');
+      }
+    };
+
+    window.submitAddFaculty = function() {
+      const email = document.getElementById('newFacUserSelect')?.value;
+      if (!email) {
+        alert('Please select an account registered in User Management.');
+        return;
+      }
+
+      const user = USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (!user) {
+        alert('Selected user account was not found in User Management.');
+        return;
+      }
+
+      const dept = document.getElementById('newFacDept').value;
+      const status = document.getElementById('newFacStatus').value;
+      const maxLoad = parseInt(document.getElementById('newFacMaxLoad').value, 10) || 24;
+      const qualsRaw = document.getElementById('newFacQuals').value.trim();
+      const quals = qualsRaw ? qualsRaw.split(',').map(s => s.trim()).filter(Boolean) : ['ITE 101'];
+
+      const existingFacIndex = FACULTY.findIndex(f => f.email.toLowerCase() === email.toLowerCase());
+      const colors = ['#25447A', '#2E7D5B', '#6C3483', '#C27A1A', '#2980B9', '#C0392B'];
+
+      if (existingFacIndex >= 0) {
+        // Update profile
+        FACULTY[existingFacIndex].dept = dept;
+        FACULTY[existingFacIndex].status = status;
+        FACULTY[existingFacIndex].maxLoad = maxLoad;
+        FACULTY[existingFacIndex].quals = quals;
+      } else {
+        // Create profile
+        FACULTY.push({
+          name: user.name,
+          email: user.email,
+          dept,
+          status,
+          load: Math.floor(maxLoad * 0.75),
+          maxLoad,
+          quals,
+          bg: colors[Math.floor(Math.random() * colors.length)]
+        });
+      }
+
+      if (VALID_USERS[user.email] && !VALID_USERS[user.email].password) {
+        VALID_USERS[user.email].password = 'password';
+      }
+
+      closeAddFacultyModal();
+      renderFacultyCards();
+      renderUserTable();
+      renderDeptFilterOptions();
+      if (document.getElementById('deptModal').style.display === 'flex') {
+        renderDeptList();
+      }
+    };
+
+    /* ═══════════════════════════════════════════════════
+       MODULE 5 — USER MANAGEMENT & ACCOUNTS (ADMIN ONLY)
+       ═══════════════════════════════════════════════════ */
+
+    function renderUserTable() {
+      const tbody = document.getElementById('userTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const isAdmin = CURRENT_USER && CURRENT_USER.role === 'admin';
+
+      // Control Add Account button visibility - admin only
+      const addAccBtn = document.getElementById('btnAddAccount');
+      if (addAccBtn) {
+        addAccBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+      }
+
+      USERS.forEach(u => {
+        const tr = document.createElement('tr');
+        const roleBadgeClass = u.role === 'admin' ? 'role-admin' : u.role === 'academic-head' ? 'role-academic-head' : 'role-program-head';
+        const isSelf = CURRENT_USER && (u.email.toLowerCase() === CURRENT_USER.email.toLowerCase());
+
+        let actionCellHtml = '';
+        if (isSelf) {
+          actionCellHtml = '<span style="font-size:11px; color:var(--text-secondary);">(Current User)</span>';
+        } else if (isAdmin) {
+          actionCellHtml = `<button class="btn btn-outline" style="font-size:11px; padding:3px 8px; color:var(--danger); border-color:#fadbd8; cursor:pointer;" onclick="window.promptDeleteUser('${u.email}')">Remove</button>`;
+        } else {
+          actionCellHtml = '<span style="font-size:11px; color:var(--text-secondary);">—</span>';
+        }
+
+        tr.innerHTML = `
+          <td style="font-weight:600;">${u.name}</td>
+          <td>${u.email}</td>
+          <td><span class="role-badge ${roleBadgeClass}">${u.roleLabel}</span></td>
+          <td style="color:var(--text-secondary);">${u.lastActive}</td>
+          <td><span class="badge ${u.status === 'Online' ? 'badge-success' : ''}" style="${u.status === 'Offline' ? 'background:#F2F2F2; color:var(--text-secondary);' : ''}">● ${u.status}</span></td>
+          <td style="text-align:right;">
+            ${actionCellHtml}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const activeCount = document.getElementById('activeUsersCount');
+      if (activeCount) activeCount.textContent = USERS.length;
+      const onlineCount = document.getElementById('onlineUsersCount');
+      if (onlineCount) onlineCount.textContent = USERS.filter(u => u.status === 'Online').length;
+    }
+
+    function showAddUserError(msg) {
+      const err = document.getElementById('addUserError');
+      if (err) {
+        err.textContent = msg;
+        err.style.display = 'block';
+      } else {
+        alert(msg);
+      }
+    }
+
+    window.openAddUserModal = function() {
+      if (!CURRENT_USER || CURRENT_USER.role !== 'admin') {
+        alert('Access denied: Only system administrators can provision accounts.');
+        return;
+      }
+      const err = document.getElementById('addUserError');
+      if (err) {
+        err.textContent = '';
+        err.style.display = 'none';
+      }
+      const deptSelect = document.getElementById('newUserDept');
+      deptSelect.innerHTML = '';
+      DEPARTMENTS.forEach(dept => {
+        const opt = document.createElement('option');
+        opt.value = dept;
+        opt.textContent = dept;
+        deptSelect.appendChild(opt);
+      });
+      document.getElementById('newUserName').value = '';
+      document.getElementById('newUserEmail').value = '';
+      document.getElementById('newUserPassword').value = '';
+      document.getElementById('newUserRole').value = 'faculty';
+      document.getElementById('addUserModal').style.display = 'flex';
+    };
+
+    window.closeAddUserModal = function() {
+      const err = document.getElementById('addUserError');
+      if (err) err.style.display = 'none';
+      document.getElementById('addUserModal').style.display = 'none';
+    };
+
+    window.submitAddUser = function() {
+      const errDiv = document.getElementById('addUserError');
+      if (errDiv) errDiv.style.display = 'none';
+
+      const name = document.getElementById('newUserName').value.trim();
+      let email = document.getElementById('newUserEmail').value.trim().toLowerCase();
+      let password = document.getElementById('newUserPassword').value.trim();
+      const role = document.getElementById('newUserRole').value;
+      const dept = document.getElementById('newUserDept').value || 'IT / CS';
+
+      if (!name) {
+        showAddUserError('Please enter the full name.');
+        return;
+      }
+      if (!email) {
+        showAddUserError('Please enter an institutional email address.');
+        return;
+      }
+
+      // Automatically append @sti.edu if omitted
+      if (!email.includes('@')) {
+        email = `${email}@sti.edu`;
+      } else if (!email.endsWith('@sti.edu')) {
+        showAddUserError('Only @sti.edu institutional email addresses are permitted.');
+        return;
+      }
+
+      // Default password to 'password' if left blank
+      if (!password) {
+        password = 'password';
+      } else if (password.length < 6) {
+        showAddUserError('Password must be at least 6 characters.');
+        return;
+      }
+
+      if (USERS.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+        showAddUserError(`An account with email ${email} already exists.`);
+        return;
+      }
+
+      const roleLabels = {
+        'admin': 'System Admin',
+        'faculty': `Faculty – ${dept}`,
+        'program-head': `Program Head – ${dept}`,
+        'academic-head': 'Academic Head'
+      };
+
+      // Persist to MySQL database via API
+      const parts = name.split(' ');
+      const firstName = parts[0];
+      const lastName = parts.slice(1).join(' ') || parts[0];
+
+      fetch('/api/users.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'add',
+          first_name: firstName,
+          last_name: lastName,
+          email: email,
+          password: password,
+          role: role,
+          subject_role: dept
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          console.log('[MySQL DB] User created successfully with ID:', data.user_id);
+        } else {
+          console.warn('[MySQL DB] User notice:', data.message);
+        }
+      })
+      .catch(err => {
+        console.log('[Database persistence offline/standalone mode]:', err);
+      });
+
+      USERS.push({
+        name,
+        email,
+        role,
+        roleLabel: roleLabels[role] || role,
+        lastActive: 'Just now',
+        status: 'Online'
+      });
+
+      const initials = name.split(' ').filter(w => w.length > 1).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'ST';
+      VALID_USERS[email] = { name, role, initials, password };
+
+      // Link to Faculty profiles if user has an academic teaching role
+      if (role === 'faculty' || role === 'program-head' || role === 'academic-head') {
+        if (!FACULTY.some(f => f.email.toLowerCase() === email.toLowerCase() || f.name.toLowerCase() === name.toLowerCase())) {
+          const colors = ['#25447A', '#2E7D5B', '#6C3483', '#C27A1A', '#2980B9', '#C0392B'];
+          FACULTY.push({
+            name,
+            email,
+            dept: dept || 'IT / CS',
+            status: 'Full-time',
+            load: 18,
+            maxLoad: 24,
+            quals: dept === 'IT / CS' ? ['ITE 101', 'CC 103'] : dept === 'Hospitality' ? ['HM 201', 'TM 301'] : ['BA 101'],
+            bg: colors[Math.floor(Math.random() * colors.length)]
+          });
+          renderFacultyCards();
+        }
+      }
+
+      closeAddUserModal();
+      renderUserTable();
+    };
+
+    window.promptDeleteUser = function(email) {
+      if (!CURRENT_USER || CURRENT_USER.role !== 'admin') {
+        alert('Access denied: Only system administrators are authorized to remove accounts.');
+        return;
+      }
+      if (email.toLowerCase() === 'admin@sti.edu') {
+        alert('Cannot remove the primary administrator account.');
+        return;
+      }
+      const user = USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (!user) return;
+
+      document.getElementById('deleteUserTargetEmail').value = user.email;
+      document.getElementById('deleteUserNameDisplay').textContent = user.name;
+      document.getElementById('deleteUserEmailDisplay').textContent = `${user.email} · ${user.roleLabel}`;
+      document.getElementById('deleteUserModal').style.display = 'flex';
+    };
+
+    window.closeDeleteUserModal = function() {
+      document.getElementById('deleteUserModal').style.display = 'none';
+    };
+
+    window.confirmDeleteUser = function() {
+      if (!CURRENT_USER || CURRENT_USER.role !== 'admin') {
+        alert('Access denied: Only system administrators are authorized to remove accounts.');
+        closeDeleteUserModal();
+        return;
+      }
+      const email = document.getElementById('deleteUserTargetEmail').value;
+      if (!email) return;
+
+      const user = USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
+      const userName = user ? user.name : null;
+
+      // Delete from MySQL database via API
+      fetch('/api/users.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete_by_email',
+          email: email
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          console.log('[MySQL DB] User account deleted successfully:', email);
+        } else {
+          console.warn('[MySQL DB] User delete notice:', data.message);
+        }
+      })
+      .catch(err => {
+        console.log('[Database deletion offline/standalone mode]:', err);
+      });
+
+      USERS = USERS.filter(u => u.email.toLowerCase() !== email.toLowerCase());
+      delete VALID_USERS[email.toLowerCase()];
+
+      // Remove corresponding faculty profile and clear any assigned schedule slots
+      if (userName) {
+        FACULTY = FACULTY.filter(f => f.email.toLowerCase() !== email.toLowerCase() && f.name !== userName);
+        Object.keys(scheduleData).forEach(roomCode => {
+          Object.keys(scheduleData[roomCode]).forEach(slotIdx => {
+            if (scheduleData[roomCode][slotIdx]?.faculty === userName) {
+              delete scheduleData[roomCode][slotIdx];
+            }
+          });
+        });
+      }
+
+      closeDeleteUserModal();
+      renderUserTable();
+      renderFacultyCards();
+      renderGrid();
+    };
+
+    // Backward-compatible alias
+    window.deleteUser = window.promptDeleteUser;
+
+    /* ═══════════════════════════════════════════════════
+       INIT — Render all modules on load
+       ═══════════════════════════════════════════════════ */
+
+    renderDeptFilterOptions();
+    renderGrid();
+    renderFloorMap('1F');
+    renderRoomTable();
+    renderFacultyCards();
+    renderUserTable();
+    syncUsersFromDB();
+
+  </script>
+</body>
+</html>
