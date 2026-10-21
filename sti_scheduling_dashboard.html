@@ -1590,13 +1590,13 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Master Schedule (Full Edit)</td>
+                    <td>Master Schedule (Modifications & Drag-Drop)</td>
                     <td><span class="access-check">✓</span></td>
-                    <td><span class="access-check">✓</span></td>
+                    <td><span class="access-deny">—</span></td>
                     <td><span class="access-deny">—</span></td>
                   </tr>
                   <tr>
-                    <td>Master Schedule (Own Program)</td>
+                    <td>Master Schedule (Read-Only Timetable View)</td>
                     <td><span class="access-check">✓</span></td>
                     <td><span class="access-check">✓</span></td>
                     <td><span class="access-check">✓</span></td>
@@ -2384,6 +2384,29 @@
       if (!tbody) return;
       tbody.innerHTML = '';
 
+      const isAdmin = CURRENT_USER && CURRENT_USER.role === 'admin';
+
+      // Restrict "Generate Baseline" button to admins
+      const btnGen = document.getElementById('btnGenerate');
+      if (btnGen) {
+        btnGen.style.display = isAdmin ? 'inline-flex' : 'none';
+      }
+
+      // Show/remove Read-Only status badge in grid controls
+      let roBadge = document.getElementById('schedReadOnlyBadge');
+      const controlsContainer = document.querySelector('.grid-controls');
+      if (!isAdmin) {
+        if (!roBadge && controlsContainer) {
+          roBadge = document.createElement('div');
+          roBadge.id = 'schedReadOnlyBadge';
+          roBadge.style.cssText = 'background:#F1F5F9; color:#475569; border:1px solid #CBD5E1; font-size:11.5px; padding:5px 11px; border-radius:6px; font-weight:600; display:inline-flex; align-items:center; gap:6px;';
+          roBadge.innerHTML = '<span>🔒</span> Read-Only (System Admin edits only)';
+          controlsContainer.insertBefore(roBadge, controlsContainer.children[2] || null);
+        }
+      } else if (roBadge) {
+        roBadge.remove();
+      }
+
       const progFilter = document.getElementById('programFilter')?.value || 'all';
       const yrFilter = document.getElementById('yearFilter')?.value || 'all';
 
@@ -2413,13 +2436,15 @@
             }
           }
 
-          // Drop zone events
-          td.addEventListener('dragover', handleDragOver);
-          td.addEventListener('dragenter', handleDragEnter);
-          td.addEventListener('dragleave', handleDragLeave);
-          td.addEventListener('drop', handleDrop);
+          // Drop zone events (only active if admin)
+          if (isAdmin) {
+            td.addEventListener('dragover', handleDragOver);
+            td.addEventListener('dragenter', handleDragEnter);
+            td.addEventListener('dragleave', handleDragLeave);
+            td.addEventListener('drop', handleDrop);
+          }
 
-          // Right-click context menu (Add / Remove / Change Professor)
+          // Right-click context menu (Add / Remove / Change Professor or Read-only view)
           td.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             openScheduleContextMenu(e, room, si);
@@ -2437,18 +2462,26 @@
     document.getElementById('yearFilter')?.addEventListener('change', renderGrid);
 
     function createBlock(data) {
+      const isAdmin = CURRENT_USER && CURRENT_USER.role === 'admin';
       const block = document.createElement('div');
       block.className = `schedule-block ${data.type}`;
-      block.draggable = true;
+      block.draggable = isAdmin;
+      if (!isAdmin) {
+        block.style.cursor = 'default';
+      }
       block.dataset.id = data.id;
-      block.title = 'Right-click to remove or change professor · Drag to move';
+      block.title = isAdmin
+        ? 'Right-click to remove or change professor · Drag to move'
+        : `${data.subj} · ${data.faculty} (${data.section}) [Read-Only: System Admin edits only]`;
       block.innerHTML = `
         <div class="block-subject">${data.subj}</div>
         <div class="block-meta">${data.faculty.split(' ').slice(-1)[0]} · ${data.section}</div>
       `;
 
-      block.addEventListener('dragstart', handleDragStart);
-      block.addEventListener('dragend', handleDragEnd);
+      if (isAdmin) {
+        block.addEventListener('dragstart', handleDragStart);
+        block.addEventListener('dragend', handleDragEnd);
+      }
 
       // Right-click context menu directly on block
       block.addEventListener('contextmenu', (e) => {
@@ -2464,6 +2497,10 @@
     }
 
     function handleDragStart(e) {
+      if (!CURRENT_USER || CURRENT_USER.role !== 'admin') {
+        e.preventDefault();
+        return false;
+      }
       draggedBlock = e.target;
       dragSourceCell = e.target.closest('.drop-zone');
       e.target.classList.add('dragging');
@@ -2508,6 +2545,7 @@
 
     function handleDrop(e) {
       e.preventDefault();
+      if (!CURRENT_USER || CURRENT_USER.role !== 'admin') return;
       const targetCell = e.target.closest('.drop-zone');
       if (!targetCell || !draggedBlock) return;
 
@@ -2644,6 +2682,7 @@
       const menu = document.getElementById('scheduleContextMenu');
       if (!menu) return;
 
+      const isAdmin = CURRENT_USER && CURRENT_USER.role === 'admin';
       const slotData = scheduleData[room]?.[slotIdx];
       const roomSlotText = `${room} · ${TIME_SLOTS[slotIdx]}`;
       document.getElementById('ctxMenuRoomSlot').textContent = roomSlotText;
@@ -2653,21 +2692,46 @@
       const btnRemove = document.getElementById('ctxBtnRemove');
       const detailsEl = document.getElementById('ctxMenuDetails');
 
-      if (slotData) {
-        detailsEl.textContent = `${slotData.faculty} (${slotData.subj} · ${slotData.section})`;
+      let roNotice = document.getElementById('ctxReadOnlyNotice');
+
+      if (!isAdmin) {
+        if (slotData) {
+          detailsEl.textContent = `${slotData.faculty} (${slotData.subj} · ${slotData.section})`;
+        } else {
+          detailsEl.textContent = '(Vacant Slot)';
+        }
         btnAdd.style.display = 'none';
-        btnEdit.style.display = 'flex';
-        btnRemove.style.display = 'flex';
-      } else {
-        detailsEl.textContent = '(Vacant Slot)';
-        btnAdd.style.display = 'flex';
         btnEdit.style.display = 'none';
         btnRemove.style.display = 'none';
+
+        if (!roNotice) {
+          roNotice = document.createElement('div');
+          roNotice.id = 'ctxReadOnlyNotice';
+          roNotice.style.cssText = 'padding:9px 14px; font-size:11.5px; color:var(--text-secondary); background:var(--bg-primary); border-top:1px solid var(--border-subtle); display:flex; align-items:center; gap:6px; font-weight:500;';
+          roNotice.innerHTML = '<span>🔒</span> Only System Admins can modify schedule';
+          menu.appendChild(roNotice);
+        } else {
+          roNotice.style.display = 'flex';
+        }
+      } else {
+        if (roNotice) roNotice.style.display = 'none';
+
+        if (slotData) {
+          detailsEl.textContent = `${slotData.faculty} (${slotData.subj} · ${slotData.section})`;
+          btnAdd.style.display = 'none';
+          btnEdit.style.display = 'flex';
+          btnRemove.style.display = 'flex';
+        } else {
+          detailsEl.textContent = '(Vacant Slot)';
+          btnAdd.style.display = 'flex';
+          btnEdit.style.display = 'none';
+          btnRemove.style.display = 'none';
+        }
       }
 
       menu.style.display = 'block';
-      const menuWidth = 230;
-      const menuHeight = 150;
+      const menuWidth = 240;
+      const menuHeight = 160;
       const posX = Math.min(e.clientX, window.innerWidth - menuWidth - 12);
       const posY = Math.min(e.clientY, window.innerHeight - menuHeight - 12);
       menu.style.left = `${Math.max(10, posX)}px`;
@@ -2687,6 +2751,11 @@
     });
 
     window.triggerCtxRemove = function() {
+      if (!CURRENT_USER || CURRENT_USER.role !== 'admin') {
+        alert('Access Denied: Only system administrators are authorized to modify the master schedule.');
+        closeScheduleContextMenu();
+        return;
+      }
       if (!ctxTargetRoom || ctxTargetSlot === null) return;
       const slotData = scheduleData[ctxTargetRoom]?.[ctxTargetSlot];
       if (slotData) {
@@ -2708,16 +2777,30 @@
     };
 
     window.triggerCtxAdd = function() {
+      if (!CURRENT_USER || CURRENT_USER.role !== 'admin') {
+        alert('Access Denied: Only system administrators are authorized to modify the master schedule.');
+        closeScheduleContextMenu();
+        return;
+      }
       openSlotModal(ctxTargetRoom, ctxTargetSlot, false);
       closeScheduleContextMenu();
     };
 
     window.triggerCtxEdit = function() {
+      if (!CURRENT_USER || CURRENT_USER.role !== 'admin') {
+        alert('Access Denied: Only system administrators are authorized to modify the master schedule.');
+        closeScheduleContextMenu();
+        return;
+      }
       openSlotModal(ctxTargetRoom, ctxTargetSlot, true);
       closeScheduleContextMenu();
     };
 
     function openSlotModal(room, slotIdx, isEdit) {
+      if (!CURRENT_USER || CURRENT_USER.role !== 'admin') {
+        alert('Access Denied: Only system administrators are authorized to modify the master schedule.');
+        return;
+      }
       document.getElementById('slotTargetRoom').value = room;
       document.getElementById('slotTargetIdx').value = slotIdx;
       document.getElementById('slotRoomDisplay').value = room;
@@ -2790,6 +2873,11 @@
     };
 
     window.submitSlotAssignment = function() {
+      if (!CURRENT_USER || CURRENT_USER.role !== 'admin') {
+        alert('Access Denied: Only system administrators are authorized to modify the master schedule.');
+        closeSlotModal();
+        return;
+      }
       const room = document.getElementById('slotTargetRoom').value;
       const slotIdx = parseInt(document.getElementById('slotTargetIdx').value, 10);
       const faculty = document.getElementById('slotFacultySelect').value;
@@ -2834,6 +2922,10 @@
 
     // Baseline & Export buttons in Master Schedule
     document.getElementById('btnGenerate')?.addEventListener('click', () => {
+      if (!CURRENT_USER || CURRENT_USER.role !== 'admin') {
+        alert('Access Denied: Only system administrators are authorized to generate or overwrite the master schedule.');
+        return;
+      }
       const aiStatus = document.getElementById('aiStatus');
       if (aiStatus) {
         aiStatus.className = 'ai-status processing';
