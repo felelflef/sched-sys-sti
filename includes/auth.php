@@ -14,7 +14,7 @@ function requireLogin() {
             echo json_encode(['success' => false, 'message' => 'Authentication required']);
             exit;
         }
-        header('Location: /login.php');
+        header('Location: /sti_scheduling_dashboard.html');
         exit;
     }
 }
